@@ -83,7 +83,7 @@ This extension contributes the following settings:
 
 ## Community & Development
 
-This extension is developed primarily using advanced AI models, with careful monitoring and testing. However, bugs may exist. Please report any issues on [GitHub](https://github.com/yourusername/gtk4-toolbar).
+This extension is developed primarily using advanced AI models, with careful monitoring and testing. However, bugs may exist. Please report any issues on [GitHub](https://github.com/Nikhil-Punia/gtk4-toolbar).
 
 We believe in the power of human creativity to revive GTK, simplify its development, and foster a deeper understanding of C/C++. Your contributions and feedback are vital!
 
