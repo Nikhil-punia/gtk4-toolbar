@@ -2,7 +2,7 @@
 
 A powerful VS Code extension that streamlines C++ GTK4 development on Windows using MSYS2. It provides a complete integrated development environment with one-click build/run controls, automated CMake configuration, package management, and theme installation.
 
-![GTK4 Toolbar Icon](logo.png)
+![GTK4 Toolbar Icon](https://github.com/Nikhil-punia/gtk4-toolbar/blob/main/.vscode/extensions/gtk4-toolbar/logo.png)
 
 ## Features
 
