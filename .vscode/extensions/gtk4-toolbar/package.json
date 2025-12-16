@@ -1,0 +1,205 @@
+{
+    "name": "gtk4-toolbar",
+    "displayName": "GTK4 Toolbar",
+    "icon": "logo.png",
+    "description": "Status bar buttons for GTK4 development with MSYS2 integration",
+    "version": "1.0.0",
+    "publisher": "gtk4-dev",
+    "engines": {
+        "vscode": "^1.75.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "keywords": [
+        "gtk4",
+        "gtk",
+        "gui",
+        "c++",
+        "msys2",
+        "toolbar",
+        "build",
+        "run"
+    ],
+    "main": "./extension.js",
+    "contributes": {
+        "configuration": {
+            "title": "GTK4 Toolbar",
+            "properties": {
+                "gtk4Toolbar.msys2Path": {
+                    "type": "string",
+                    "default": "E:/cpp/mysys2",
+                    "description": "Path to MSYS2 installation directory"
+                },
+                "gtk4Toolbar.gskRenderer": {
+                    "type": "string",
+                    "default": "cairo",
+                    "enum": [
+                        "cairo",
+                        "vulkan",
+                        "gl",
+                        "ngl"
+                    ],
+                    "description": "GSK renderer to use (cairo for software rendering, vulkan/gl/ngl for hardware acceleration)"
+                },
+                "gtk4Toolbar.msys2Environment": {
+                    "type": "string",
+                    "default": "UCRT64",
+                    "enum": [
+                        "UCRT64",
+                        "MINGW64",
+                        "CLANG64"
+                    ],
+                    "description": "MSYS2 Environment to use"
+                },
+                "gtk4Toolbar.compiler": {
+                    "type": "string",
+                    "default": "g++",
+                    "enum": [
+                        "g++",
+                        "clang++"
+                    ],
+                    "description": "Compiler to use"
+                },
+                "gtk4Toolbar.cppStandard": {
+                    "type": "string",
+                    "default": "c++17",
+                    "enum": [
+                        "c++11",
+                        "c++14",
+                        "c++17",
+                        "c++20",
+                        "c++23"
+                    ],
+                    "description": "C++ standard to use for compilation"
+                },
+                "gtk4Toolbar.compilerFlags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [
+                        "-Wall",
+                        "-Wextra"
+                    ],
+                    "description": "Additional compiler flags to use"
+                },
+                "gtk4Toolbar.autoCloseTerminal": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Automatically close terminal after successful build/run operations"
+                },
+                "gtk4Toolbar.commandDelay": {
+                    "type": "number",
+                    "default": 500,
+                    "minimum": 100,
+                    "maximum": 2000,
+                    "description": "Delay in milliseconds between commands (100-2000ms)"
+                },
+                "gtk4Toolbar.msys2StartDelay": {
+                    "type": "number",
+                    "default": 5000,
+                    "minimum": 2000,
+                    "maximum": 10000,
+                    "description": "Delay in milliseconds to wait for MSYS2 to start (2000-10000ms)"
+                },
+                "gtk4Toolbar.showSuccessNotifications": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show success notifications for build/run operations"
+                },
+                "gtk4Toolbar.enableDebugOutput": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable debug output and verbose logging"
+                },
+                "gtk4Toolbar.gtkTheme": {
+                    "type": "string",
+                    "default": "",
+                    "description": "GTK Theme override (e.g. Adwaita:dark)"
+                },
+                "gtk4Toolbar.gtkDebug": {
+                    "type": "string",
+                    "default": "",
+                    "description": "GTK Debug flags (e.g. interactive)"
+                },
+                "gtk4Toolbar.pkgConfigLibraries": {
+                    "type": "string",
+                    "default": "gtk4 libadwaita-1 gstreamer-1.0",
+                    "description": "Libraries to link against using pkg-config (space separated)"
+                },
+                "gtk4Toolbar.cmakeGenerator": {
+                    "type": "string",
+                    "default": "Ninja",
+                    "enum": [
+                        "Ninja",
+                        "Unix Makefiles",
+                        "MSYS Makefiles"
+                    ],
+                    "description": "CMake generator to use"
+                },
+                "gtk4Toolbar.cmakeBuildType": {
+                    "type": "string",
+                    "default": "Debug",
+                    "enum": [
+                        "Debug",
+                        "Release",
+                        "RelWithDebInfo",
+                        "MinSizeRel"
+                    ],
+                    "description": "CMake build type"
+                },
+                "gtk4Toolbar.cmakeArgs": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Additional arguments to pass to CMake"
+                },
+                "gtk4Toolbar.customEnvVars": {
+                    "type": "object",
+                    "default": {},
+                    "description": "Custom environment variables to set when running the application. Use ${msys2Path} as a placeholder."
+                },
+                "gtk4Toolbar.themeInstallPath": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Custom path for installing and searching themes"
+                }
+            }
+        },
+        "commands": [
+            {
+                "command": "gtk4-toolbar.clean",
+                "title": "🧹 Clean",
+                "category": "GTK4"
+            },
+            {
+                "command": "gtk4-toolbar.buildCurrent",
+                "title": "🔨 Build Current",
+                "category": "GTK4"
+            },
+            {
+                "command": "gtk4-toolbar.runCurrent",
+                "title": "▶️ Run Current",
+                "category": "GTK4"
+            },
+            {
+                "command": "gtk4-toolbar.buildRunCurrent",
+                "title": "⚡ Build & Run Current",
+                "category": "GTK4"
+            },
+            {
+                "command": "gtk4-toolbar.openSettings",
+                "title": "⚙️ Open GTK4 Toolbar Settings",
+                "category": "GTK4"
+            },
+            {
+                "command": "gtk4-toolbar.exportProject",
+                "title": "GTK4: Export Project Template Extension"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "echo 'No compilation needed for this extension'"
+    }
+}

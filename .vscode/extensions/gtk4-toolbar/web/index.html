@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; script-src {{cspSource}} 'unsafe-inline' https://cdnjs.cloudflare.com; font-src {{cspSource}} https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src {{cspSource}} https: data:;">
+    <title>GTK4 Toolbar Configuration</title>
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet"/>
+    <!-- Bootstrap Local -->
+    <link href="lib/bootstrap.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --bs-body-bg: var(--vscode-editor-background);
+            --bs-body-color: var(--vscode-editor-foreground);
+            --bs-border-color: var(--vscode-widget-border);
+        }
+
+        body {
+            background-color: var(--vscode-editor-background);
+            color: var(--vscode-editor-foreground);
+            font-family: var(--vscode-font-family);
+            font-size: var(--vscode-font-size);
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: var(--vscode-titleBar-activeBackground) !important;
+            border-bottom: 1px solid var(--vscode-widget-border);
+        }
+        .navbar-brand {
+            color: var(--vscode-titleBar-activeForeground) !important;
+        }
+
+        /* Cards */
+        .card {
+            background-color: var(--vscode-editorWidget-background);
+            border-color: var(--vscode-widget-border);
+        }
+        .card-body {
+            color: var(--vscode-editor-foreground);
+        }
+
+        /* Tabs */
+        .nav-tabs .nav-link {
+            color: var(--vscode-panelTitle-inactiveForeground);
+            border: none;
+            background: transparent;
+        }
+        .nav-tabs .nav-link:hover {
+            color: var(--vscode-panelTitle-activeForeground);
+        }
+        .nav-tabs .nav-link.active {
+            color: var(--vscode-panelTitle-activeForeground);
+            background: transparent;
+            border-bottom: 2px solid var(--vscode-panelTitle-activeBorder);
+        }
+
+        /* Inputs */
+        .form-control, .form-select, .input-group-text {
+            background-color: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border-color: var(--vscode-focusBorder);
+            box-shadow: 0 0 0 1px var(--vscode-focusBorder);
+        }
+        .form-control::placeholder {
+            color: var(--vscode-input-placeholderForeground);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: var(--vscode-button-hoverBackground);
+        }
+        .btn-secondary, .btn-outline-secondary {
+            background-color: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            border: 1px solid var(--vscode-widget-border);
+        }
+        .btn-secondary:hover, .btn-outline-secondary:hover {
+            background-color: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        /* Lists */
+        .list-group-item {
+            background-color: var(--vscode-editorWidget-background);
+            color: var(--vscode-editor-foreground);
+            border-color: var(--vscode-widget-border);
+        }
+        .list-group-item-action:hover {
+            background-color: var(--vscode-list-hoverBackground);
+            color: var(--vscode-list-hoverForeground);
+        }
+
+        /* Modals */
+        .modal-content {
+            background-color: var(--vscode-editorWidget-background);
+            color: var(--vscode-editor-foreground);
+            border: 1px solid var(--vscode-widget-border);
+        }
+        .modal-header, .modal-footer {
+            border-color: var(--vscode-widget-border);
+        }
+        
+        /* Utilities */
+        .text-muted {
+            color: var(--vscode-descriptionForeground) !important;
+        }
+        a {
+            color: var(--vscode-textLink-foreground);
+            text-decoration: none;
+        }
+        a:hover {
+            color: var(--vscode-textLink-activeForeground);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg w-100 d-flex bg-body-tertiary shadow-sm mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand mt-2 mt-lg-0" href="#">
+                <i class="fas fa-tools text-primary me-2"></i>
+                GTK4 Toolbar
+            </a>
+        </div>
+    </nav>
+
+    <div class="container-fluid mb-3">
+        <!-- Tabs Nav -->
+        <ul class="nav nav-tabs mb-3" id="main-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-settings" data-bs-toggle="tab" data-bs-target="#content-settings" type="button" role="tab" aria-controls="content-settings" aria-selected="true">
+                    <i class="fas fa-cog me-2"></i>Settings
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-gtk" data-bs-toggle="tab" data-bs-target="#content-gtk" type="button" role="tab" aria-controls="content-gtk" aria-selected="false">
+                    <i class="fas fa-palette me-2"></i>GTK Env
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-themes" data-bs-toggle="tab" data-bs-target="#content-themes" type="button" role="tab" aria-controls="content-themes" aria-selected="false">
+                    <i class="fas fa-globe me-2"></i>Online Themes
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-designer" data-bs-toggle="tab" data-bs-target="#content-designer" type="button" role="tab" aria-controls="content-designer" aria-selected="false">
+                    <i class="fas fa-pencil-ruler me-2"></i>UI Designer
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-plugins" data-bs-toggle="tab" data-bs-target="#content-plugins" type="button" role="tab" aria-controls="content-plugins" aria-selected="false">
+                    <i class="fas fa-plug me-2"></i>Plugins
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-about" data-bs-toggle="tab" data-bs-target="#content-about" type="button" role="tab" aria-controls="content-about" aria-selected="false">
+                    <i class="fas fa-info-circle me-2"></i>About
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tabs Content -->
+        <div class="tab-content" id="main-tabs-content">
+            
+            <!-- Extension Settings -->
+            <div class="tab-pane fade show active" id="content-settings" role="tabpanel" aria-labelledby="tab-settings">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">Extension Configuration</h5>
+                        <form id="configForm">
+                            <!-- MSYS2 Path -->
+                            <div class="mb-4">
+                                <label class="form-label" for="msys2Path">MSYS2 Installation Path</label>
+                                <div class="input-group">
+                                    <input type="text" id="msys2Path" class="form-control" placeholder="e.g., C:/msys64" oninput="updateMsys2Buttons()" />
+                                    <button class="btn btn-primary" type="button" onclick="pickMsys2Path()" title="Select Folder">
+                                        <i class="fas fa-folder-open"></i>
+                                    </button>
+                                    <button class="btn btn-outline-success" type="button" id="btn-install-msys2" onclick="installMsys2()" title="Install MSYS2">
+                                        <i class="fas fa-download"></i> Install
+                                    </button>
+                                    <button class="btn btn-outline-secondary" type="button" id="btn-show-msys2" onclick="openMsys2Folder()" title="Show Path" style="display: none;">
+                                        <i class="fas fa-external-link-alt"></i> Show
+                                    </button>
+                                </div>
+                                <div class="form-text">Absolute path to your MSYS2 installation. If not installed, click Install.</div>
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-info" onclick="setupEnvironment()">
+                                        <i class="fas fa-tools me-1"></i> Install GTK4 & Dependencies
+                                    </button>
+                                </div>
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="configureCMake()">
+                                        <i class="fas fa-project-diagram me-1"></i> CMake Setup
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="configureGppIntellisense()">
+                                        <i class="fas fa-code me-1"></i> C++ IntelliSense
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Environment & Compiler Selection -->
+                            <h6 class="mb-3 border-bottom pb-2"><i class="fas fa-microchip me-2"></i>Toolchain Configuration</h6>
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="msys2Environment">MSYS2 Environment</label>
+                                    <select class="form-select" id="msys2Environment">
+                                        <option value="ucrt64">UCRT64 (Recommended)</option>
+                                        <option value="mingw64">MINGW64</option>
+                                        <option value="clang64">CLANG64</option>
+                                    </select>
+                                    <div class="form-text">Select the MSYS2 environment to use.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="compiler">Compiler</label>
+                                    <select class="form-select" id="compiler">
+                                        <option value="g++">g++ (GCC)</option>
+                                        <option value="clang++">clang++ (Clang)</option>
+                                    </select>
+                                    <div class="form-text">Select the C++ compiler executable.</div>
+                                </div>
+                            </div>
+
+                            <!-- Compiler Settings -->
+                            <h6 class="mb-3 border-bottom pb-2"><i class="fas fa-code me-2"></i>Compiler Settings</h6>
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="cppStandard">C++ Standard</label>
+                                    <select class="form-select" id="cppStandard">
+                                        <option value="c++11">C++11</option>
+                                        <option value="c++14">C++14</option>
+                                        <option value="c++17">C++17</option>
+                                        <option value="c++20">C++20</option>
+                                        <option value="c++23">C++23</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="compilerFlags">Compiler Flags</label>
+                                    <input type="text" id="compilerFlags" class="form-control" />
+                                    <div class="form-text">Space-separated flags passed to g++.</div>
+                                </div>
+                                <div class="col-12 mt-3">
+                                    <label class="form-label" for="pkgConfigLibraries">Pkg-Config Libraries</label>
+                                    <input type="text" id="pkgConfigLibraries" class="form-control" placeholder="gtk4 libadwaita-1 gstreamer-1.0" />
+                                    <div class="form-text">Space-separated libraries for single-file builds.</div>
+                                </div>
+                            </div>
+
+                            <!-- CMake Settings -->
+                            <h6 class="mb-3 border-bottom pb-2"><i class="fas fa-cogs me-2"></i>CMake Settings</h6>
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="cmakeGenerator">Generator</label>
+                                    <select class="form-select" id="cmakeGenerator">
+                                        <option value="Ninja">Ninja (Recommended)</option>
+                                        <option value="Unix Makefiles">Unix Makefiles</option>
+                                        <option value="MSYS Makefiles">MSYS Makefiles</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="cmakeBuildType">Build Type</label>
+                                    <select class="form-select" id="cmakeBuildType">
+                                        <option value="Debug">Debug</option>
+                                        <option value="Release">Release</option>
+                                        <option value="RelWithDebInfo">RelWithDebInfo</option>
+                                        <option value="MinSizeRel">MinSizeRel</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 mt-3">
+                                    <label class="form-label" for="cmakeArgs">Extra Arguments</label>
+                                    <input type="text" id="cmakeArgs" class="form-control" placeholder="-DENABLE_TESTS=ON" />
+                                </div>
+                            </div>
+
+                            <!-- General Settings -->
+                            <h6 class="mb-3 border-bottom pb-2"><i class="fas fa-sliders-h me-2"></i>General Settings</h6>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="autoCloseTerminal" />
+                                <label class="form-check-label" for="autoCloseTerminal">Auto-close Terminal after success</label>
+                            </div>
+
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="showSuccessNotifications" />
+                                <label class="form-check-label" for="showSuccessNotifications">Show Success Notifications</label>
+                            </div>
+
+                            <!-- Environment Variables Section -->
+                            <h6 class="mb-3 border-bottom pb-2"><i class="fas fa-terminal me-2"></i>Environment Variables</h6>
+                            <div class="mb-4">
+                                <label class="form-label">Environment Variables</label>
+                                <div id="envVarsContainer">
+                                    <!-- Dynamic rows will be added here -->
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="addEnvVarRow()">
+                                    <i class="fas fa-plus"></i> Add Variable
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-info mt-2 ms-2" onclick="addGStreamerPreset()">
+                                    <i class="fas fa-film"></i> Add GStreamer Paths
+                                </button>
+                                <div class="form-text">Add custom environment variables (e.g., GST_PLUGIN_PATH). Use ${msys2Path} as a placeholder for the MSYS2 path.</div>
+                            </div>
+
+                            <button type="button" class="btn btn-primary" onclick="saveConfig()">Save Changes</button>
+                            <button type="button" class="btn btn-secondary" onclick="loadConfig()">Reset</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GTK Settings -->
+            <div class="tab-pane fade" id="content-gtk" role="tabpanel" aria-labelledby="tab-gtk">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">GTK Environment Settings</h5>
+                        <form id="gtkForm">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="gskRenderer">GSK Renderer</label>
+                                    <select class="form-select" id="gskRenderer">
+                                        <option value="gl">OpenGL (Default)</option>
+                                        <option value="cairo">Cairo (Software Fallback)</option>
+                                        <option value="vulkan">Vulkan</option>
+                                        <option value="ngl">NGL</option>
+                                    </select>
+                                    <div class="form-text">Select 'Cairo' if you experience rendering artifacts.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="gtkDebug">GTK Debug Flags</label>
+                                    <input type="text" id="gtkDebug" class="form-control" />
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="gtkTheme">GTK Theme (GTK_THEME)</label>
+                                <input type="text" id="gtkTheme" class="form-control" list="gtkThemes" />
+                                <datalist id="gtkThemes">
+                                    <option value="Adwaita">
+                                    <option value="Adwaita:dark">
+                                    <option value="HighContrast">
+                                    <option value="HighContrastInverse">
+                                    <option value="Win32">
+                                </datalist>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Installed Themes</label>
+                                <div class="alert alert-info small py-2 mb-2">
+                                    <i class="fas fa-info-circle me-1"></i> 
+                                    <strong>Adwaita</strong> and <strong>Adwaita-dark</strong> are built-in GTK4 themes available by default.
+                                    Install custom themes from the "Online Themes" tab - they will be automatically built and ready to use!
+                                </div>
+                                <div class="border rounded">
+                                    <div class="list-group list-group-flush" id="installedThemesList" style="max-height: 200px; overflow-y: auto;">
+                                        <div class="list-group-item text-muted">Loading...</div>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="refreshInstalledThemes()">
+                                        <i class="fas fa-sync-alt me-1"></i> Refresh List
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="openThemeFolder()">
+                                        <i class="fas fa-folder-open me-1"></i> Open Theme Folder
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn btn-primary" onclick="saveGtkConfig()">Apply Environment</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Online Themes -->
+            <div class="tab-pane fade" id="content-themes" role="tabpanel" aria-labelledby="tab-themes">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">Browse Online Themes</h5>
+                        
+                        <div class="alert alert-warning small py-2 mb-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <strong>Note:</strong> Theme building requires <code>git</code>, <code>sassc</code>, and <code>meson</code>. 
+                                    If you see installation errors, run this in a <strong>separate</strong> MSYS2 terminal:
+                                    <div class="mt-1">
+                                        <code>pacman -S --noconfirm git unzip mingw-w64-ucrt-x86_64-sassc meson ninja</code>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-warning ms-2" onclick="openMsys2Terminal()" title="Open MSYS2 Terminal">
+                                    <i class="fas fa-terminal"></i> Open Terminal
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="input-group mb-3">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="themeSearch" placeholder="Search themes on GitHub..." onkeyup="handleSearch(event)"/>
+                            <div class="input-group-text">
+                                <input class="form-check-input mt-0" type="checkbox" id="gtkFilter" checked onchange="handleSearch({target: document.getElementById('themeSearch'), key: 'Enter'})" aria-label="Filter for GTK themes">
+                                <span class="ms-2 small">GTK Only</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <small class="text-muted me-2">Popular Tags:</small>
+                            <button class="btn btn-sm rounded-pill btn-outline-secondary me-1" onclick="searchTag('Dark')">Dark</button>
+                            <button class="btn btn-sm rounded-pill btn-outline-secondary me-1" onclick="searchTag('Light')">Light</button>
+                            <button class="btn btn-sm rounded-pill btn-outline-secondary me-1" onclick="searchTag('Flat')">Flat</button>
+                            <button class="btn btn-sm rounded-pill btn-outline-secondary me-1" onclick="searchTag('MacOS')">MacOS</button>
+                            <button class="btn btn-sm rounded-pill btn-outline-secondary me-1" onclick="searchTag('Windows')">Windows</button>
+                            <button class="btn btn-sm rounded-pill btn-outline-secondary me-1" onclick="searchTag('Material')">Material</button>
+                        </div>
+
+                        <div class="row" id="themeGrid">
+                            <!-- Themes injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UI Designer -->
+            <div class="tab-pane fade" id="content-designer" role="tabpanel" aria-labelledby="tab-designer">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">UI Designer (Glade)</h5>
+                        <p class="card-text">Glade is a RAD tool to enable quick & easy development of user interfaces for the GTK+ toolkit.</p>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Ensure <code>mingw-w64-ucrt-x86_64-glade</code> is installed in your MSYS2 environment.
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="openGlade()">
+                            <i class="fas fa-pencil-ruler me-2"></i> Launch Glade
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Plugins Manager -->
+            <div class="tab-pane fade" id="content-plugins" role="tabpanel" aria-labelledby="tab-plugins">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">MSYS2 Package Manager</h5>
+                        
+                        <!-- Search Section -->
+                        <div class="input-group mb-4">
+                            <input type="text" id="packageSearchInput" class="form-control" placeholder="Search for packages (e.g., gstreamer, libadwaita)..." onkeyup="if(event.key === 'Enter') searchPackages()">
+                            <button class="btn btn-primary" type="button" onclick="searchPackages()">
+                                <i class="fas fa-search me-2"></i>Search
+                            </button>
+                        </div>
+
+                        <!-- Common Plugins Section -->
+                        <h6 class="mb-3"><i class="fas fa-star text-warning me-2"></i>Common Plugins & Libraries</h6>
+                        <div class="row g-3 mb-4" id="commonPluginsList">
+                            <!-- Populated by JS -->
+                            <div class="col-12 text-center text-muted">Loading common plugins...</div>
+                        </div>
+
+                        <!-- GStreamer Suite Section -->
+                        <h6 class="mb-3"><i class="fas fa-film text-danger me-2"></i>GStreamer Multimedia Suite</h6>
+                        <div class="card mb-4 border-danger bg-dark">
+                            <div class="card-body">
+                                <p class="small text-muted mb-3">Install the complete GStreamer collection for video/audio playback support (MP4, H.264, HTTPS, etc.).</p>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button class="btn btn-danger" onclick="installGStreamerSuite()">
+                                        <i class="fas fa-layer-group me-2"></i>Install Full Suite
+                                    </button>
+                                    <button class="btn btn-outline-danger" onclick="installPackage('mingw-w64-ucrt-x86_64-gst-plugins-good')">Good Plugins</button>
+                                    <button class="btn btn-outline-danger" onclick="installPackage('mingw-w64-ucrt-x86_64-gst-plugins-bad')">Bad Plugins</button>
+                                    <button class="btn btn-outline-danger" onclick="installPackage('mingw-w64-ucrt-x86_64-gst-plugins-ugly')">Ugly Plugins</button>
+                                    <button class="btn btn-outline-danger" onclick="installPackage('mingw-w64-ucrt-x86_64-gst-libav')">Libav (FFmpeg)</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Search Results Section -->
+                        <div id="searchResultsSection" style="display: none;">
+                            <h6 class="mb-3"><i class="fas fa-list me-2"></i>Search Results</h6>
+                            <div class="list-group" id="searchResultsList">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About -->
+            <div class="tab-pane fade" id="content-about" role="tabpanel" aria-labelledby="tab-about">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">GTK4 Toolbar</h5>
+                        <p class="text-muted mb-4">Version 1.0.0</p>
+                        <p class="card-text">A professional development tool for GTK4 applications on Windows using MSYS2.</p>
+                        
+                        <div class="row justify-content-center mt-4">
+                            <div class="col-md-8 text-start">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Integrated Build System (CMake & Ninja)</li>
+                                    <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>One-click Build & Run</li>
+                                    <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>MSYS2 Package Manager Integration</li>
+                                    <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Online Theme Installer</li>
+                                    <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Glade UI Designer Launcher</li>
+                                    <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Project Template Exporter</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <p class="small text-muted">Developed for the VS Code Community</p>
+                            <a href="https://github.com/yourusername/gtk4-toolbar" class="btn btn-outline-dark btn-sm" target="_blank">
+                                <i class="fab fa-github me-2"></i>View on GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Bootstrap Local -->
+    <script src="lib/bootstrap.bundle.min.js"></script>
+    <script>
+        // Apply Bootstrap Dark Mode if VS Code is in Dark Mode
+        function updateTheme() {
+            if (document.body.classList.contains('vscode-dark')) {
+                document.documentElement.setAttribute('data-bs-theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-bs-theme', 'light');
+            }
+        }
+        
+        // Initial check
+        updateTheme();
+
+        // Listen for theme changes
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    updateTheme();
+                }
+            });
+        });
+        observer.observe(document.body, { attributes: true });
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
