@@ -2,6 +2,10 @@
     "name": "gtk4-toolbar",
     "displayName": "GTK4 Toolbar",
     "icon": "logo.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Nikhil-punia/gtk4-toolbar"
+    },
     "description": "Status bar buttons for GTK4 development with MSYS2 integration",
     "version": "1.0.0",
     "publisher": "gtk4-dev",
