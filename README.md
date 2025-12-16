@@ -79,7 +79,7 @@ This extension contributes the following settings:
 
 ## License
 
-[MIT](LICENSE)
+[MIT](https://github.com/Nikhil-punia/gtk4-toolbar/blob/main/.vscode/extensions/gtk4-toolbar/LICENSE)
 
 ## Community & Development
 
