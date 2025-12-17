@@ -37,7 +37,7 @@ A powerful VS Code extension that streamlines C++ GTK4 development on Windows us
 
 ## Getting Started
 
-1.  **Install MSYS2:** If you haven't already, download and install (MSYS2)[https://www.msys2.org/].
+1.  **Install MSYS2:** If you haven't already, download and install [MSYS2](https://www.msys2.org/).
 2.  **Configure Extension:**
     *   Click the **Settings** gear icon in the status bar (or run `GTK4 Toolbar: Open Settings`).
     *   Set your **MSYS2 Path** (e.g., `C:/msys64`).
