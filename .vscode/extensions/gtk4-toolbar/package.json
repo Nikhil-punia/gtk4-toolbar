@@ -25,6 +25,11 @@
         "build",
         "run"
     ],
+    "activationEvents": [
+        "onLanguage:cpp",
+        "onLanguage:c",
+        "workspaceContains:CMakeLists.txt"
+    ],
     "main": "./extension.js",
     "contributes": {
         "configuration": {
