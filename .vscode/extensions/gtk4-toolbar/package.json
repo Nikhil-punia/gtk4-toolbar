@@ -8,7 +8,7 @@
     },
     "description": "Status bar buttons for GTK4 development with MSYS2 integration",
     "version": "1.0.0",
-    "publisher": "gtk4-dev",
+    "publisher": "Vdusar",
     "engines": {
         "vscode": "^1.75.0"
     },
