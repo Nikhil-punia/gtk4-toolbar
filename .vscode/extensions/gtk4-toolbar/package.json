@@ -7,7 +7,7 @@
         "url": "https://github.com/Nikhil-punia/gtk4-toolbar"
     },
     "description": "Status bar buttons for GTK4 development with MSYS2 integration",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "publisher": "Vdusar",
     "engines": {
         "vscode": "^1.75.0"
