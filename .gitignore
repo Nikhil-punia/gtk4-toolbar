@@ -38,6 +38,7 @@ subprojects/*
 # Android / Pixiewood
 # ===================
 .pixiewood/
+android/*
 *.apk
 *.aab
 *.keystore
