@@ -30,7 +30,7 @@
         "onLanguage:c",
         "workspaceContains:CMakeLists.txt"
     ],
-    "main": "./extension.js",
+    "main": "./src/extension.js",
     "contributes": {
         "configuration": {
             "title": "GTK4 Toolbar",
@@ -97,6 +97,51 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Automatically close terminal after successful build/run operations"
+                },
+                "gtk4Toolbar.pixiewoodPath": {
+                    "type": "string",
+                    "default": "pixiewood",
+                    "description": "Path to the pixiewood script/executable for Android builds"
+                },
+                "gtk4Toolbar.pixiewoodInstallDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Directory where Pixiewood (gtk-android-builder) is installed"
+                },
+                "gtk4Toolbar.androidManifestPath": {
+                    "type": "string",
+                    "default": "pixiewood.xml",
+                    "description": "Path to the Android manifest XML file"
+                },
+                "gtk4Toolbar.androidSdkPath": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to the Android SDK installation directory"
+                },
+                "gtk4Toolbar.androidNdkPath": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to the Android NDK (typically within the SDK folder)"
+                },
+                "gtk4Toolbar.androidStudioPath": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to Android Studio installation directory"
+                },
+                "gtk4Toolbar.mesonPath": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to custom meson executable (e.g., sp1ritCS fork)"
+                },
+                "gtk4Toolbar.androidReleaseBuild": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Build release version instead of debug"
+                },
+                "gtk4Toolbar.androidVerbose": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable verbose output for Android builds"
                 },
                 "gtk4Toolbar.commandDelay": {
                     "type": "number",

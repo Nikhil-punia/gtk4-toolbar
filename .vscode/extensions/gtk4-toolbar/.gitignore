@@ -1,0 +1,59 @@
+# GTK4 Toolbar Extension
+
+## Dependencies
+node_modules/
+package-lock.json
+
+## Build outputs
+*.vsix
+out/
+dist/
+
+## OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+## IDE/Editor
+.idea/
+*.swp
+*.swo
+*~
+
+## Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+## Test coverage
+coverage/
+.nyc_output/
+
+## TypeScript (if migrating later)
+*.tsbuildinfo
+
+## Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+## Environment
+.env
+.env.local
+.env.*.local
+
+## Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+## VS Code test outputs
+.vscode-test/
+
+## Backup files
+*.bak
+*.backup
+extension.js.bak

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Pixiewood Manifest File
+    Documentation: https://github.com/sp1ritCS/gtk-android-builder
+    
+    This file defines how your GTK4 application should be built for Android.
+    Uses the official pixiewood format with pw:app namespace.
+-->
+<app xmlns="https://sp1rit.arpa/pixiewood/" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <!-- Metainfo: Include AppStream metadata file -->
+    <metainfo vercalc="count">
+        <xi:include href="src:com.example.mygtk4app.metainfo.xml" parse="xml"/>
+    </metainfo>
+    
+    <!-- Style and icon configuration -->
+    <style>
+        <!-- Available themes: "gtk" or "adw" (for libadwaita) -->
+        <theme name="adw"/>
+        <icon type="generate">
+            <drawable target="foreground" type="avd" path="src:icon.xml"/>
+            <color target="background">#ffffff</color>
+        </icon>
+    </style>
+    
+    <!-- Dependencies: GTK libraries to build for Android -->
+    <dependencies>
+        <glib revision="2.84.0">
+            <patch>hack</patch>
+        </glib>
+        <harfbuzz/>
+        <fontconfig/>
+        <gdk-pixbuf/>
+        <gtk/>
+        <libadwaita/>
+    </dependencies>
+    
+    <!-- Build configuration -->
+    <build target="hello">
+        <architectures>
+            <arch>aarch64</arch>
+            <!-- <arch>x86_64</arch> -->
+        </architectures>
+    </build>
+</app>

@@ -163,6 +163,11 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-android" data-bs-toggle="tab" data-bs-target="#content-android" type="button" role="tab" aria-controls="content-android" aria-selected="false">
+                    <i class="fab fa-android me-2"></i>Android
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link" id="tab-plugins" data-bs-toggle="tab" data-bs-target="#content-plugins" type="button" role="tab" aria-controls="content-plugins" aria-selected="false">
                     <i class="fas fa-plug me-2"></i>Plugins
                 </button>
@@ -444,6 +449,135 @@
                         <button type="button" class="btn btn-primary" onclick="openGlade()">
                             <i class="fas fa-pencil-ruler me-2"></i> Launch Glade
                         </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Android Build -->
+            <div class="tab-pane fade" id="content-android" role="tabpanel" aria-labelledby="tab-android">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">Android Build (Pixiewood)</h5>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Build GTK4 apps for Android using <a href="https://github.com/sp1ritCS/gtk-android-builder" target="_blank">gtk-android-builder</a>.
+                        </div>
+
+                        <!-- Installation Section -->
+                        <div class="mb-4 border-bottom pb-3">
+                            <h6 class="mb-3"><i class="fas fa-download me-2"></i>Installation</h6>
+                            
+                            <div class="mb-3">
+                                <label for="pixiewoodInstallDir" class="form-label">Installation Directory</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="pixiewoodInstallDir" placeholder="Parent folder for gtk-android-builder">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="pickPixiewoodInstallDir()">Browse</button>
+                                </div>
+                                <div class="form-text">Select the folder where <code>gtk-android-builder</code> should be cloned.</div>
+                            </div>
+
+                            <div id="installButtonContainer" style="display: none;">
+                                <p class="small text-muted">Pixiewood not found in the selected directory.</p>
+                                <button type="button" class="btn btn-outline-primary" onclick="installPixiewood()">
+                                    <i class="fas fa-cloud-download-alt me-2"></i>Install Pixiewood & Dependencies
+                                </button>
+                            </div>
+                            <div id="installedBadgeContainer" style="display: none;">
+                                <span class="badge bg-success"><i class="fas fa-check me-1"></i>Installed</span>
+                            </div>
+                        </div>
+                        
+                        <form id="androidForm">
+                            <div class="mb-3">
+                                <label for="pixiewoodPath" class="form-label">Pixiewood Script Path</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="pixiewoodPath" placeholder="e.g., pixiewood or /path/to/pixiewood">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="pickPixiewoodPath()">Browse</button>
+                                </div>
+                                <div class="form-text">Path to the pixiewood executable or perl script.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="androidManifestPath" class="form-label">Manifest File (XML)</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="androidManifestPath" placeholder="e.g., pixiewood.xml">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="pickAndroidManifest()">Browse</button>
+                                </div>
+                            </div>
+
+                            <!-- Android SDK/NDK Settings -->
+                            <h6 class="mb-3 border-bottom pb-2 mt-4"><i class="fab fa-android me-2"></i>Android SDK & NDK</h6>
+                            
+                            <div class="mb-3">
+                                <label for="androidSdkPath" class="form-label">Android SDK Path <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="androidSdkPath" placeholder="e.g., C:\\Users\\YourName\\AppData\\Local\\Android\\Sdk">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="pickAndroidSdkPath()">Browse</button>
+                                </div>
+                                <div class="form-text">Required. Path to the Android SDK installation.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="androidNdkPath" class="form-label">Android NDK Path</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="androidNdkPath" placeholder="e.g., C:\\Users\\YourName\\AppData\\Local\\Android\\Sdk\\ndk\\25.2.9519653">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="pickAndroidNdkPath()">Browse</button>
+                                </div>
+                                <div class="form-text">Path to the Android NDK (typically within the SDK folder).</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="androidStudioPath" class="form-label">Android Studio Path</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="androidStudioPath" placeholder="e.g., C:\\Program Files\\Android\\Android Studio">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="pickAndroidStudioPath()">Browse</button>
+                                </div>
+                                <div class="form-text">Optional. Location where Android Studio is installed.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="mesonPath" class="form-label">Meson Executable</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="mesonPath" placeholder="Leave empty for default, or use forked meson path">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="pickMesonPath()">Browse</button>
+                                </div>
+                                <div class="form-text">Optional. Path to a custom meson executable (e.g., sp1ritCS fork).</div>
+                            </div>
+
+                            <!-- Build Options -->
+                            <h6 class="mb-3 border-bottom pb-2 mt-4"><i class="fas fa-cogs me-2"></i>Build Options</h6>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="androidReleaseBuild">
+                                <label class="form-check-label" for="androidReleaseBuild">
+                                    Release Build <small class="text-muted">(--release)</small>
+                                </label>
+                            </div>
+
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="androidVerbose">
+                                <label class="form-check-label" for="androidVerbose">
+                                    Verbose Output <small class="text-muted">(-v)</small>
+                                </label>
+                            </div>
+
+                            <button type="button" class="btn btn-primary mb-4" onclick="saveAndroidConfig()">Save Android Settings</button>
+
+                            <hr class="my-4">
+
+                            <h6 class="mb-3">Build Actions</h6>
+                            <div class="d-grid gap-2 d-md-block">
+                                <button type="button" class="btn btn-outline-primary me-2" onclick="runAndroidPrepare()">
+                                    <i class="fas fa-file-code me-2"></i>1. Prepare
+                                </button>
+                                <button type="button" class="btn btn-outline-primary me-2" onclick="runAndroidGenerate()">
+                                    <i class="fas fa-cogs me-2"></i>2. Generate
+                                </button>
+                                <button type="button" class="btn btn-success" onclick="runAndroidBuild()">
+                                    <i class="fab fa-android me-2"></i>3. Build APK
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>

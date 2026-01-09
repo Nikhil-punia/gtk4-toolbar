@@ -1,6 +1,46 @@
 // VS Code API integration
 const vscode = acquireVsCodeApi();
 
+// Toast notification function
+function showToast(message, type = 'info') {
+    // Create toast container if it doesn't exist
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999;';
+        document.body.appendChild(container);
+    }
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    const bgColor = type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8';
+    toast.style.cssText = `
+        background: ${bgColor}; color: white; padding: 12px 20px; border-radius: 6px;
+        margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        animation: slideIn 0.3s ease-out; font-size: 14px;
+    `;
+    toast.textContent = message;
+    container.appendChild(toast);
+    
+    // Add animation keyframes if not already present
+    if (!document.getElementById('toast-styles')) {
+        const style = document.createElement('style');
+        style.id = 'toast-styles';
+        style.textContent = `
+            @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+            @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Remove toast after 4 seconds
+    setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
 // Configuration Management
 function saveConfig() {
     const config = {
@@ -231,7 +271,22 @@ window.addEventListener('message', event => {
                 document.getElementById('cmakeArgs').value = config.cmakeArgs || '';
                 document.getElementById('autoCloseTerminal').checked = config.autoCloseTerminal || false;
                 document.getElementById('showSuccessNotifications').checked = config.showSuccessNotifications || true;
+                document.getElementById('pixiewoodPath').value = config.pixiewoodPath || 'pixiewood';
+                document.getElementById('androidManifestPath').value = config.androidManifestPath || 'pixiewood.xml';
+                document.getElementById('pixiewoodInstallDir').value = config.pixiewoodInstallDir || '';
+                // Android SDK/NDK settings
+                document.getElementById('androidSdkPath').value = config.androidSdkPath || '';
+                document.getElementById('androidNdkPath').value = config.androidNdkPath || '';
+                document.getElementById('androidStudioPath').value = config.androidStudioPath || '';
+                document.getElementById('mesonPath').value = config.mesonPath || '';
+                document.getElementById('androidReleaseBuild').checked = config.androidReleaseBuild || false;
+                document.getElementById('androidVerbose').checked = config.androidVerbose || false;
                 updateMsys2Buttons();
+                
+                // Check status after loading config
+                if (config.pixiewoodInstallDir) {
+                    checkPixiewoodStatus();
+                }
                 renderEnvVars(config.customEnvVars);
             }
             break;
@@ -247,6 +302,75 @@ window.addEventListener('message', event => {
             if (message.path) {
                 document.getElementById('msys2Path').value = message.path;
                 updateMsys2Buttons();
+            }
+            break;
+        case 'updatePixiewoodPath':
+            if (message.path) {
+                document.getElementById('pixiewoodPath').value = message.path;
+            }
+            break;
+        case 'updateAndroidManifestPath':
+            if (message.path) {
+                document.getElementById('androidManifestPath').value = message.path;
+            }
+            break;
+        case 'updatePixiewoodInstallDir':
+            if (message.path) {
+                document.getElementById('pixiewoodInstallDir').value = message.path;
+                checkPixiewoodStatus();
+            }
+            break;
+        case 'updateAndroidSdkPath':
+            if (message.path) {
+                document.getElementById('androidSdkPath').value = message.path;
+            }
+            break;
+        case 'updateAndroidNdkPath':
+            if (message.path) {
+                document.getElementById('androidNdkPath').value = message.path;
+            }
+            break;
+        case 'updateAndroidStudioPath':
+            if (message.path) {
+                document.getElementById('androidStudioPath').value = message.path;
+            }
+            break;
+        case 'updateMesonPath':
+            if (message.path) {
+                document.getElementById('mesonPath').value = message.path;
+            }
+            break;
+        case 'updatePixiewoodStatus':
+            const installBtn = document.getElementById('installButtonContainer');
+            const installedBadge = document.getElementById('installedBadgeContainer');
+            
+            if (message.installed) {
+                installBtn.style.display = 'none';
+                installedBadge.style.display = 'block';
+                // Auto-update the script path if empty or default
+                const currentScriptPath = document.getElementById('pixiewoodPath').value;
+                if (!currentScriptPath || currentScriptPath === 'pixiewood') {
+                    // We can't easily guess the full path here without more info, 
+                    // but the user can browse for it.
+                }
+            } else {
+                installBtn.style.display = 'block';
+                installedBadge.style.display = 'none';
+            }
+            break;
+        case 'configUpdated':
+            // Update pkgConfigLibraries field when a library is installed/removed
+            if (message.pkgConfigLibraries !== undefined) {
+                document.getElementById('pkgConfigLibraries').value = message.pkgConfigLibraries;
+                showToast('Build configuration updated!', 'success');
+            }
+            break;
+        case 'packageRemoved':
+            showToast(`Package ${message.package} removed!`, 'success');
+            // Refresh the search results to update the installed status
+            const searchInput = document.getElementById('packageSearchInput');
+            if (searchInput && searchInput.value) {
+                searchPackages();
             }
             break;
         case 'refreshThemes':
@@ -613,12 +737,114 @@ function openMsys2Terminal() {
     vscode.postMessage({ command: 'openMsys2Terminal' });
 }
 
+// --- Android Logic ---
+
+function saveAndroidConfig() {
+    const config = {
+        pixiewoodPath: document.getElementById('pixiewoodPath').value,
+        androidManifestPath: document.getElementById('androidManifestPath').value,
+        pixiewoodInstallDir: document.getElementById('pixiewoodInstallDir').value,
+        androidSdkPath: document.getElementById('androidSdkPath').value,
+        androidNdkPath: document.getElementById('androidNdkPath').value,
+        androidStudioPath: document.getElementById('androidStudioPath').value,
+        mesonPath: document.getElementById('mesonPath').value,
+        androidReleaseBuild: document.getElementById('androidReleaseBuild').checked,
+        androidVerbose: document.getElementById('androidVerbose').checked
+    };
+
+    console.log('[GTK4 WebView] Sending saveAndroidConfig:', config);
+
+    vscode.postMessage({
+        command: 'saveAndroidConfig',
+        data: config
+    });
+
+    // Visual Feedback
+    const btn = document.querySelector('button[onclick="saveAndroidConfig()"]');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check me-2"></i>Saved!';
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-success');
+    
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-primary');
+        
+        // Re-check status after save
+        checkPixiewoodStatus();
+    }, 2000);
+}
+
+function checkPixiewoodStatus() {
+    const installDir = document.getElementById('pixiewoodInstallDir').value;
+    if (installDir) {
+        vscode.postMessage({ 
+            command: 'checkPixiewoodStatus',
+            path: installDir
+        });
+    }
+}
+
+function pickAndroidSdkPath() {
+    vscode.postMessage({ command: 'pickAndroidSdkPath' });
+}
+
+function pickAndroidNdkPath() {
+    vscode.postMessage({ command: 'pickAndroidNdkPath' });
+}
+
+function pickAndroidStudioPath() {
+    vscode.postMessage({ command: 'pickAndroidStudioPath' });
+}
+
+function pickMesonPath() {
+    vscode.postMessage({ command: 'pickMesonPath' });
+}
+
+function pickPixiewoodInstallDir() {
+    vscode.postMessage({ command: 'pickPixiewoodInstallDir' });
+}
+
+function runAndroidPrepare() {
+    vscode.postMessage({ command: 'runAndroidPrepare' });
+}
+
+function runAndroidGenerate() {
+    vscode.postMessage({ command: 'runAndroidGenerate' });
+}
+
+function runAndroidBuild() {
+    vscode.postMessage({ command: 'runAndroidBuild' });
+}
+
+function pickPixiewoodPath() {
+    vscode.postMessage({ command: 'pickPixiewoodPath' });
+}
+
+function pickAndroidManifest() {
+    vscode.postMessage({ command: 'pickAndroidManifest' });
+}
+
+function installPixiewood() {
+    const installDir = document.getElementById('pixiewoodInstallDir').value;
+    if (!installDir) {
+        // If no dir selected, maybe prompt or error? 
+        // For now, let extension handle default or error
+    }
+    vscode.postMessage({ 
+        command: 'installPixiewood',
+        path: installDir
+    });
+}
+
 // Initial load
 document.addEventListener('DOMContentLoaded', () => {
     loadConfig();
     renderThemes();
     refreshInstalledThemes();
     renderCommonPlugins();
+    // Status check will happen after config load
 });
 
 // --- Plugins Manager Logic ---
@@ -670,11 +896,26 @@ function searchPackages() {
 }
 
 function installPackage(packageName) {
+    console.log('[GTK4 WebView] installPackage called with:', packageName);
     vscode.postMessage({
         command: 'installPackage',
         package: packageName
     });
+    showToast(`Installing ${packageName}...`, 'info');
 }
+
+// Remove package function
+function removePackage(packageName) {
+    vscode.postMessage({
+        command: 'removePackage',
+        package: packageName
+    });
+    showToast(`Removing ${packageName}...`, 'info');
+}
+
+// Expose functions to global scope for onclick handlers in dynamically generated HTML
+window.installPackage = installPackage;
+window.removePackage = removePackage;
 
 function installGStreamerSuite() {
     vscode.postMessage({
@@ -712,8 +953,12 @@ function displaySearchResults(results) {
         if (line.startsWith('mingw') || line.startsWith('ucrt')) {
             if (currentItem) items.push(currentItem);
             const parts = line.split(' ');
+            const fullName = parts[0]; // e.g., ucrt64/mingw-w64-ucrt-x86_64-pkg
+            // Extract just the package name without the repo prefix
+            const packageName = fullName.includes('/') ? fullName.split('/')[1] : fullName;
             currentItem = {
-                name: parts[0], // e.g., mingw64/pkg-name
+                fullName: fullName,
+                packageName: packageName,
                 version: parts[1],
                 installed: line.includes('[installed]'),
                 desc: ''
@@ -724,17 +969,43 @@ function displaySearchResults(results) {
     });
     if (currentItem) items.push(currentItem);
     
-    resultsList.innerHTML = items.map(item => `
+    resultsList.innerHTML = items.map((item, index) => {
+        return `
         <div class="list-group-item d-flex justify-content-between align-items-center">
             <div>
-                <div class="fw-bold">${item.name} <span class="badge bg-secondary ms-2">${item.version}</span> ${item.installed ? '<span class="badge bg-success">Installed</span>' : ''}</div>
+                <div class="fw-bold">${item.fullName} <span class="badge bg-secondary ms-2">${item.version}</span> ${item.installed ? '<span class="badge bg-success">Installed</span>' : ''}</div>
                 <div class="small text-muted">${item.desc}</div>
             </div>
-            <button class="btn btn-sm ${item.installed ? 'btn-secondary' : 'btn-primary'}" 
-                    onclick="installPackage('${item.name.split('/')[1]}')" 
-                    ${item.installed ? 'disabled' : ''}>
-                ${item.installed ? 'Installed' : 'Install'}
-            </button>
+            <div class="btn-group">
+                ${item.installed ? `
+                    <button class="btn btn-sm btn-outline-danger remove-pkg-btn" data-package="${item.packageName}">
+                        Remove
+                    </button>
+                ` : `
+                    <button class="btn btn-sm btn-primary install-pkg-btn" data-package="${item.packageName}">
+                        Install
+                    </button>
+                `}
+            </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
+    
+    // Attach event listeners after rendering
+    resultsList.querySelectorAll('.install-pkg-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const pkg = this.getAttribute('data-package');
+            console.log('[GTK4 WebView] Install button clicked for:', pkg);
+            installPackage(pkg);
+        });
+    });
+    
+    resultsList.querySelectorAll('.remove-pkg-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const pkg = this.getAttribute('data-package');
+            console.log('[GTK4 WebView] Remove button clicked for:', pkg);
+            removePackage(pkg);
+        });
+    });
 }
+

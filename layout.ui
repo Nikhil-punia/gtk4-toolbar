@@ -2,422 +2,361 @@
 <interface>
   <requires lib="gtk" version="4.0"/>
   <requires lib="libadwaita" version="1.0"/>
+  
   <object class="AdwApplicationWindow" id="window">
     <property name="default-width">1100</property>
     <property name="default-height">650</property>
+    <property name="width-request">320</property>
+    <property name="height-request">480</property>
     <property name="title">Air Quality Dashboard</property>
     <property name="content">
-      <object class="AdwToolbarView">
-        <child type="top">
-          <object class="AdwHeaderBar">
-            <property name="title-widget">
-              <object class="GtkLabel">
-                <property name="label">Company Name</property>
-                <style><class name="title"/></style>
+      <object class="AdwNavigationSplitView" id="split_view">
+        <property name="min-sidebar-width">200</property>
+        <property name="max-sidebar-width">280</property>
+        <property name="sidebar-width-fraction">0.25</property>
+        
+        <property name="sidebar">
+          <object class="AdwNavigationPage">
+            <property name="title">Navigation</property>
+            <property name="child">
+              <object class="AdwToolbarView">
+                <child type="top">
+                  <object class="AdwHeaderBar">
+                    <property name="show-end-title-buttons" bind-source="split_view" bind-property="collapsed"/>
+                  </object>
+                </child>
+                <property name="content">
+                  <object class="GtkScrolledWindow">
+                    <property name="hscrollbar-policy">never</property>
+                    <property name="child">
+                      <object class="GtkListBox" id="nav_list">
+                        <property name="selection-mode">single</property>
+                        <style><class name="navigation-sidebar"/></style>
+                        <child>
+                          <object class="GtkListBoxRow" id="row_dashboard">
+                            <property name="child">
+                              <object class="GtkBox">
+                                <property name="spacing">12</property>
+                                <property name="margin-top">8</property>
+                                <property name="margin-bottom">8</property>
+                                <property name="margin-start">8</property>
+                                <property name="margin-end">8</property>
+                                <child><object class="GtkImage"><property name="icon-name">view-grid-symbolic</property></object></child>
+                                <child><object class="GtkLabel"><property name="label">Dashboard</property><property name="hexpand">true</property><property name="xalign">0</property></object></child>
+                              </object>
+                            </property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkListBoxRow" id="row_live">
+                            <property name="child">
+                              <object class="GtkBox">
+                                <property name="spacing">12</property>
+                                <property name="margin-top">8</property>
+                                <property name="margin-bottom">8</property>
+                                <property name="margin-start">8</property>
+                                <property name="margin-end">8</property>
+                                <child><object class="GtkImage"><property name="icon-name">utilities-system-monitor-symbolic</property></object></child>
+                                <child><object class="GtkLabel"><property name="label">Live Charts</property><property name="hexpand">true</property><property name="xalign">0</property></object></child>
+                              </object>
+                            </property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkListBoxRow" id="row_video">
+                            <property name="child">
+                              <object class="GtkBox">
+                                <property name="spacing">12</property>
+                                <property name="margin-top">8</property>
+                                <property name="margin-bottom">8</property>
+                                <property name="margin-start">8</property>
+                                <property name="margin-end">8</property>
+                                <child><object class="GtkImage"><property name="icon-name">video-display-symbolic</property></object></child>
+                                <child><object class="GtkLabel"><property name="label">Media Player</property><property name="hexpand">true</property><property name="xalign">0</property></object></child>
+                              </object>
+                            </property>
+                          </object>
+                        </child>
+                      </object>
+                    </property>
+                  </object>
+                </property>
               </object>
             </property>
-            <child type="end">
-               <object class="GtkButton">
-                 <property name="label">Sign out</property>
-                 <style><class name="flat"/></style>
-               </object>
-            </child>
           </object>
-        </child>
+        </property>
+        
         <property name="content">
-          <object class="GtkBox">
-            <property name="orientation">horizontal</property>
-            
-            <!-- Sidebar -->
-            <child>
-              <object class="GtkStackSidebar">
-                <property name="stack">main_stack</property>
-                <property name="width-request">240</property>
-                <style><class name="sidebar"/></style>
-              </object>
-            </child>
-            
-            <child>
-              <object class="GtkSeparator"/>
-            </child>
-
-            <!-- Main Content -->
-            <child>
-              <object class="GtkStack" id="main_stack">
-                
-                <!-- Dashboard Page -->
-                <child>
-                  <object class="GtkStackPage">
-                    <property name="name">dashboard</property>
-                    <property name="title">Dashboard</property>
-                    <property name="child">
-                      <object class="GtkScrolledWindow">
+          <object class="AdwNavigationPage">
+            <property name="title">Dashboard</property>
+            <property name="child">
+              <object class="AdwToolbarView">
+                <child type="top">
+                  <object class="AdwHeaderBar" id="content_header">
+                    <child type="start">
+                      <object class="GtkToggleButton" id="sidebar_toggle">
+                        <property name="icon-name">sidebar-show-symbolic</property>
+                        <property name="visible" bind-source="split_view" bind-property="collapsed"/>
+                      </object>
+                    </child>
+                    <property name="title-widget">
+                      <object class="AdwWindowTitle" id="content_title">
+                        <property name="title">Air Quality</property>
+                        <property name="subtitle">Dashboard</property>
+                      </object>
+                    </property>
+                    <child type="end"><object class="GtkButton"><property name="icon-name">open-menu-symbolic</property></object></child>
+                  </object>
+                </child>
+                <property name="content">
+                  <object class="GtkStack" id="main_stack">
+                    <property name="transition-type">crossfade</property>
+                    
+                    <!-- Dashboard Page -->
+                    <child>
+                      <object class="GtkStackPage">
+                        <property name="name">dashboard</property>
+                        <property name="title">Dashboard</property>
                         <property name="child">
-                          <object class="GtkBox">
-                            <property name="orientation">vertical</property>
-                            <property name="margin-top">20</property>
-                            <property name="margin-bottom">40</property>
-                            <property name="margin-start">40</property>
-                            <property name="margin-end">40</property>
-                            <property name="spacing">20</property>
+                          <object class="GtkScrolledWindow">
+                            <property name="hscrollbar-policy">never</property>
+                            <property name="child">
+                              <object class="AdwClamp">
+                                <property name="maximum-size">1200</property>
+                                <property name="tightening-threshold">800</property>
+                                <property name="child">
+                                  <object class="GtkBox">
+                                    <property name="orientation">vertical</property>
+                                    <property name="margin-top">16</property>
+                                    <property name="margin-bottom">24</property>
+                                    <property name="margin-start">16</property>
+                                    <property name="margin-end">16</property>
+                                    <property name="spacing">16</property>
 
-                            <!-- Dashboard Header -->
-                            <child>
-                              <object class="GtkBox">
-                                <property name="orientation">horizontal</property>
-                                <property name="spacing">15</property>
-                                <property name="margin-bottom">10</property>
-                                <child>
-                                  <object class="GtkLabel">
-                                    <property name="label">Dashboard</property>
-                                    <style><class name="dashboard-title"/></style>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkBox">
-                                    <property name="hexpand">true</property>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkBox">
-                                    <style>
-                                      <class name="linked"/>
-                                    </style>
                                     <child>
-                                      <object class="GtkButton">
-                                        <property name="label">Share</property>
-                                        <style><class name="btn-outline"/></style>
+                                      <object class="GtkBox" id="dashboard_header">
+                                        <property name="orientation">vertical</property>
+                                        <property name="spacing">12</property>
+                                        <child><object class="GtkLabel"><property name="label">Dashboard</property><property name="halign">start</property><style><class name="title-1"/></style></object></child>
+                                        <child>
+                                          <object class="GtkFlowBox" id="controls_flow">
+                                            <property name="selection-mode">none</property>
+                                            <property name="row-spacing">8</property>
+                                            <property name="column-spacing">8</property>
+                                            <property name="homogeneous">false</property>
+                                            <property name="max-children-per-line">4</property>
+                                            <property name="min-children-per-line">1</property>
+                                            <child><object class="GtkFlowBoxChild"><property name="child">
+                                              <object class="GtkBox">
+                                                <property name="orientation">vertical</property>
+                                                <property name="spacing">0</property>
+                                                <child>
+                                                  <object class="GtkBox">
+                                                    <property name="spacing">4</property>
+                                                    <child>
+                                                      <object class="GtkEntry" id="city_entry">
+                                                        <property name="placeholder-text">Search for a city...</property>
+                                                        <property name="width-chars">22</property>
+                                                        <property name="secondary-icon-name">edit-find-symbolic</property>
+                                                      </object>
+                                                    </child>
+                                                  </object>
+                                                </child>
+                                                <!-- Search Dropdown -->
+                                                <child>
+                                                  <object class="GtkFrame" id="search_dropdown">
+                                                    <property name="visible">false</property>
+                                                    <property name="child">
+                                                      <object class="GtkScrolledWindow">
+                                                        <property name="max-content-height">300</property>
+                                                        <property name="propagate-natural-height">true</property>
+                                                        <property name="child">
+                                                          <object class="GtkListBox" id="search_results_list">
+                                                            <property name="selection-mode">single</property>
+                                                            <style><class name="boxed-list"/></style>
+                                                          </object>
+                                                        </property>
+                                                      </object>
+                                                    </property>
+                                                    <style><class name="card"/></style>
+                                                  </object>
+                                                </child>
+                                              </object>
+                                            </property></object></child>
+                                            <child><object class="GtkFlowBoxChild"><property name="child"><object class="GtkButton" id="btn_fetch_aqi"><property name="label">Update</property><style><class name="suggested-action"/></style></object></property></object></child>
+                                            <child><object class="GtkFlowBoxChild"><property name="child"><object class="GtkButton"><property name="icon-name">document-save-symbolic</property><property name="tooltip-text">Export</property></object></property></object></child>
+                                            <child><object class="GtkFlowBoxChild"><property name="child"><object class="GtkButton"><property name="icon-name">emblem-shared-symbolic</property><property name="tooltip-text">Share</property></object></property></object></child>
+                                          </object>
+                                        </child>
                                       </object>
                                     </child>
+
+                                    <child><object class="GtkFrame"><property name="child"><object class="GtkDrawingArea" id="chart_area_current"><property name="height-request">280</property><property name="hexpand">true</property></object></property><style><class name="card"/></style></object></child>
+
+                                    <child><object class="GtkLabel"><property name="label">Current Stats</property><property name="halign">start</property><style><class name="title-3"/></style></object></child>
+
                                     <child>
-                                      <object class="GtkButton">
-                                        <property name="label">Export</property>
-                                        <style><class name="btn-outline"/></style>
+                                      <object class="GtkFlowBox" id="aqi_result_box">
+                                        <property name="selection-mode">none</property>
+                                        <property name="row-spacing">12</property>
+                                        <property name="column-spacing">12</property>
+                                        <property name="homogeneous">true</property>
+                                        <property name="max-children-per-line">3</property>
+                                        <property name="min-children-per-line">1</property>
+                                        <child><object class="GtkFlowBoxChild"><property name="child"><object class="GtkFrame"><property name="child"><object class="GtkBox"><property name="orientation">vertical</property><property name="spacing">8</property><property name="margin-top">16</property><property name="margin-bottom">16</property><property name="margin-start">16</property><property name="margin-end">16</property><child><object class="GtkLabel"><property name="label">AQI Index</property><property name="halign">start</property><style><class name="dim-label"/></style></object></child><child><object class="GtkLabel" id="lbl_aqi_value"><property name="label">--</property><property name="halign">start</property><style><class name="title-1"/></style></object></child><child><object class="GtkLabel" id="lbl_aqi_status"><property name="label">Select city</property><property name="halign">start</property></object></child></object></property><style><class name="card"/></style></object></property></object></child>
+                                        <child><object class="GtkFlowBoxChild"><property name="child"><object class="GtkFrame"><property name="child"><object class="GtkBox"><property name="orientation">vertical</property><property name="spacing">8</property><property name="margin-top">16</property><property name="margin-bottom">16</property><property name="margin-start">16</property><property name="margin-end">16</property><child><object class="GtkLabel"><property name="label">PM 2.5</property><property name="halign">start</property><style><class name="dim-label"/></style></object></child><child><object class="GtkLabel" id="lbl_pm25"><property name="label">--</property><property name="halign">start</property><style><class name="title-1"/></style></object></child></object></property><style><class name="card"/></style></object></property></object></child>
+                                        <child><object class="GtkFlowBoxChild"><property name="child"><object class="GtkFrame"><property name="child"><object class="GtkBox"><property name="orientation">vertical</property><property name="spacing">8</property><property name="margin-top">16</property><property name="margin-bottom">16</property><property name="margin-start">16</property><property name="margin-end">16</property><child><object class="GtkLabel"><property name="label">PM 10</property><property name="halign">start</property><style><class name="dim-label"/></style></object></child><child><object class="GtkLabel" id="lbl_pm10"><property name="label">--</property><property name="halign">start</property><style><class name="title-1"/></style></object></child></object></property><style><class name="card"/></style></object></property></object></child>
                                       </object>
                                     </child>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkDropDown" id="city_dropdown">
-                                    <property name="enable-search">true</property>
-                                    <property name="model">
-                                      <object class="GtkStringList">
-                                        <items>
-                                          <item>New Delhi</item>
-                                          <item>Mumbai</item>
-                                          <item>Bengaluru</item>
-                                          <item>Chennai</item>
-                                          <item>Kolkata</item>
-                                          <item>Hyderabad</item>
-                                          <item>Pune</item>
-                                          <item>Ahmedabad</item>
-                                        </items>
+
+                                    <!-- Pollutant Details -->
+                                    <child><object class="GtkLabel"><property name="label">Pollutant Details</property><property name="halign">start</property><style><class name="title-3"/></style></object></child>
+                                    <child>
+                                      <object class="GtkFlowBox" id="pollutant_detail_box">
+                                        <property name="visible">false</property>
+                                        <property name="selection-mode">none</property>
+                                        <property name="row-spacing">8</property>
+                                        <property name="column-spacing">8</property>
+                                        <property name="homogeneous">true</property>
+                                        <property name="max-children-per-line">4</property>
+                                        <property name="min-children-per-line">2</property>
+                                        <child><object class="GtkFlowBoxChild"><property name="child"><object class="GtkFrame"><property name="child"><object class="GtkBox"><property name="orientation">vertical</property><property name="spacing">4</property><property name="margin-top">12</property><property name="margin-bottom">12</property><property name="margin-start">12</property><property name="margin-end">12</property><child><object class="GtkLabel"><property name="label">Ozone</property><property name="halign">start</property><style><class name="dim-label"/><class name="caption"/></style></object></child><child><object class="GtkLabel" id="lbl_o3"><property name="label">O₃: --</property><property name="halign">start</property><style><class name="heading"/></style></object></child></object></property><style><class name="card"/></style></object></property></object></child>
+                                        <child><object class="GtkFlowBoxChild"><property name="child"><object class="GtkFrame"><property name="child"><object class="GtkBox"><property name="orientation">vertical</property><property name="spacing">4</property><property name="margin-top">12</property><property name="margin-bottom">12</property><property name="margin-start">12</property><property name="margin-end">12</property><child><object class="GtkLabel"><property name="label">Nitrogen Dioxide</property><property name="halign">start</property><style><class name="dim-label"/><class name="caption"/></style></object></child><child><object class="GtkLabel" id="lbl_no2"><property name="label">NO₂: --</property><property name="halign">start</property><style><class name="heading"/></style></object></child></object></property><style><class name="card"/></style></object></property></object></child>
+                                        <child><object class="GtkFlowBoxChild"><property name="child"><object class="GtkFrame"><property name="child"><object class="GtkBox"><property name="orientation">vertical</property><property name="spacing">4</property><property name="margin-top">12</property><property name="margin-bottom">12</property><property name="margin-start">12</property><property name="margin-end">12</property><child><object class="GtkLabel"><property name="label">Carbon Monoxide</property><property name="halign">start</property><style><class name="dim-label"/><class name="caption"/></style></object></child><child><object class="GtkLabel" id="lbl_co"><property name="label">CO: --</property><property name="halign">start</property><style><class name="heading"/></style></object></child></object></property><style><class name="card"/></style></object></property></object></child>
+                                        <child><object class="GtkFlowBoxChild"><property name="child"><object class="GtkFrame"><property name="child"><object class="GtkBox"><property name="orientation">vertical</property><property name="spacing">4</property><property name="margin-top">12</property><property name="margin-bottom">12</property><property name="margin-start">12</property><property name="margin-end">12</property><child><object class="GtkLabel"><property name="label">Sulfur Dioxide</property><property name="halign">start</property><style><class name="dim-label"/><class name="caption"/></style></object></child><child><object class="GtkLabel" id="lbl_so2"><property name="label">SO₂: --</property><property name="halign">start</property><style><class name="heading"/></style></object></child></object></property><style><class name="card"/></style></object></property></object></child>
                                       </object>
-                                    </property>
+                                    </child>
+
+                                    <!-- Weather Info -->
+                                    <child><object class="GtkLabel"><property name="label">Weather Conditions</property><property name="halign">start</property><style><class name="title-3"/></style></object></child>
+                                    <child>
+                                      <object class="GtkFlowBox" id="weather_box">
+                                        <property name="visible">false</property>
+                                        <property name="selection-mode">none</property>
+                                        <property name="row-spacing">8</property>
+                                        <property name="column-spacing">8</property>
+                                        <property name="homogeneous">true</property>
+                                        <property name="max-children-per-line">3</property>
+                                        <property name="min-children-per-line">1</property>
+                                        <child><object class="GtkFlowBoxChild"><property name="child"><object class="GtkFrame"><property name="child"><object class="GtkBox"><property name="orientation">vertical</property><property name="spacing">4</property><property name="margin-top">12</property><property name="margin-bottom">12</property><property name="margin-start">12</property><property name="margin-end">12</property><child><object class="GtkLabel"><property name="label">Temperature</property><property name="halign">start</property><style><class name="dim-label"/><class name="caption"/></style></object></child><child><object class="GtkLabel" id="lbl_temperature"><property name="label">🌡️ --</property><property name="halign">start</property><style><class name="heading"/></style></object></child></object></property><style><class name="card"/></style></object></property></object></child>
+                                        <child><object class="GtkFlowBoxChild"><property name="child"><object class="GtkFrame"><property name="child"><object class="GtkBox"><property name="orientation">vertical</property><property name="spacing">4</property><property name="margin-top">12</property><property name="margin-bottom">12</property><property name="margin-start">12</property><property name="margin-end">12</property><child><object class="GtkLabel"><property name="label">Humidity</property><property name="halign">start</property><style><class name="dim-label"/><class name="caption"/></style></object></child><child><object class="GtkLabel" id="lbl_humidity"><property name="label">💧 --</property><property name="halign">start</property><style><class name="heading"/></style></object></child></object></property><style><class name="card"/></style></object></property></object></child>
+                                        <child><object class="GtkFlowBoxChild"><property name="child"><object class="GtkFrame"><property name="child"><object class="GtkBox"><property name="orientation">vertical</property><property name="spacing">4</property><property name="margin-top">12</property><property name="margin-bottom">12</property><property name="margin-start">12</property><property name="margin-end">12</property><child><object class="GtkLabel"><property name="label">Wind</property><property name="halign">start</property><style><class name="dim-label"/><class name="caption"/></style></object></child><child><object class="GtkLabel" id="lbl_wind"><property name="label">💨 --</property><property name="halign">start</property><style><class name="heading"/></style></object></child></object></property><style><class name="card"/></style></object></property></object></child>
+                                      </object>
+                                    </child>
+
+                                    <child><object class="GtkLabel"><property name="label">Health Advice</property><property name="halign">start</property><style><class name="title-3"/></style></object></child>
+                                    <child><object class="GtkFrame"><property name="child"><object class="GtkBox"><property name="margin-top">16</property><property name="margin-bottom">16</property><property name="margin-start">16</property><property name="margin-end">16</property><child><object class="GtkLabel" id="lbl_health_advice"><property name="label">Select a city to view health advice.</property><property name="wrap">true</property><property name="xalign">0</property></object></child></object></property><style><class name="card"/></style></object></child>
+                                    <child><object class="GtkLabel" id="lbl_city_name"><property name="visible">false</property></object></child>
                                   </object>
-                                </child>
-                                <child>
-                                  <object class="GtkButton" id="btn_fetch_aqi">
-                                    <property name="label">Update</property>
-                                    <style><class name="btn-primary"/></style>
-                                  </object>
-                                </child>
+                                </property>
                               </object>
-                            </child>
-
-                            <!-- Chart -->
-                            <child>
-                               <object class="GtkDrawingArea" id="chart_area_current">
-                                 <property name="height-request">350</property>
-                                 <style><class name="card"/></style>
-                               </object>
-                            </child>
-
-                            <!-- Section Title -->
-                            <child>
-                              <object class="GtkLabel">
-                                <property name="label">Current Stats</property>
-                                <property name="halign">start</property>
-                                <style><class name="section-title"/></style>
-                              </object>
-                            </child>
-
-                            <!-- Stats Grid -->
-                            <child>
-                               <object class="GtkBox" id="aqi_result_box">
-                                  <property name="orientation">horizontal</property>
-                                  <property name="spacing">20</property>
-                                  <property name="homogeneous">true</property>
-                                  
-                                  <!-- AQI Card -->
-                                  <child>
-                                    <object class="GtkBox">
-                                      <property name="orientation">vertical</property>
-                                      <property name="spacing">5</property>
-                                      <style><class name="card"/></style>
-                                      <child>
-                                        <object class="GtkLabel">
-                                          <property name="label">AQI Index</property>
-                                          <property name="halign">start</property>
-                                          <style><class name="stat-label"/></style>
-                                        </object>
-                                      </child>
-                                      <child>
-                                        <object class="GtkLabel" id="lbl_aqi_value">
-                                          <property name="label">--</property>
-                                          <property name="halign">start</property>
-                                          <style><class name="stat-value"/></style>
-                                        </object>
-                                      </child>
-                                      <child>
-                                        <object class="GtkLabel" id="lbl_aqi_status">
-                                          <property name="label">Status</property>
-                                          <property name="halign">start</property>
-                                        </object>
-                                      </child>
-                                    </object>
-                                  </child>
-
-                                  <!-- PM2.5 Card -->
-                                  <child>
-                                    <object class="GtkBox">
-                                      <property name="orientation">vertical</property>
-                                      <property name="spacing">5</property>
-                                      <style><class name="card"/></style>
-                                      <child>
-                                        <object class="GtkLabel">
-                                          <property name="label">PM 2.5</property>
-                                          <property name="halign">start</property>
-                                          <style><class name="stat-label"/></style>
-                                        </object>
-                                      </child>
-                                      <child>
-                                        <object class="GtkLabel" id="lbl_pm25">
-                                          <property name="label">--</property>
-                                          <property name="halign">start</property>
-                                          <style><class name="stat-value"/></style>
-                                        </object>
-                                      </child>
-                                    </object>
-                                  </child>
-
-                                  <!-- PM10 Card -->
-                                  <child>
-                                    <object class="GtkBox">
-                                      <property name="orientation">vertical</property>
-                                      <property name="spacing">5</property>
-                                      <style><class name="card"/></style>
-                                      <child>
-                                        <object class="GtkLabel">
-                                          <property name="label">PM 10</property>
-                                          <property name="halign">start</property>
-                                          <style><class name="stat-label"/></style>
-                                        </object>
-                                      </child>
-                                      <child>
-                                        <object class="GtkLabel" id="lbl_pm10">
-                                          <property name="label">--</property>
-                                          <property name="halign">start</property>
-                                          <style><class name="stat-value"/></style>
-                                        </object>
-                                      </child>
-                                    </object>
-                                  </child>
-
-                               </object>
-                            </child>
-
-                            <!-- Section Title -->
-                            <child>
-                              <object class="GtkLabel">
-                                <property name="label">Health Advice</property>
-                                <property name="halign">start</property>
-                                <style><class name="section-title"/></style>
-                              </object>
-                            </child>
-
-                            <!-- Advice Table/Card -->
-                            <child>
-                              <object class="GtkBox">
-                                <style><class name="card"/></style>
-                                <child>
-                                  <object class="GtkLabel" id="lbl_health_advice">
-                                    <property name="label">Select a city to view health advice.</property>
-                                    <property name="wrap">true</property>
-                                    <property name="xalign">0</property>
-                                  </object>
-                                </child>
-                              </object>
-                            </child>
-                            
-                            <!-- Hidden label for city name logic compatibility -->
-                            <child>
-                                <object class="GtkLabel" id="lbl_city_name">
-                                    <property name="visible">false</property>
-                                </object>
-                            </child>
-
+                            </property>
                           </object>
                         </property>
                       </object>
-                    </property>
-                  </object>
-                </child>
+                    </child>
 
-                <!-- Live Charts Page -->
-                <child>
-                  <object class="GtkStackPage">
-                    <property name="name">live_charts</property>
-                    <property name="title">Live Charts</property>
-                    <property name="child">
-                      <object class="GtkScrolledWindow">
+                    <!-- Live Charts Page -->
+                    <child>
+                      <object class="GtkStackPage">
+                        <property name="name">live_charts</property>
+                        <property name="title">Live Charts</property>
                         <property name="child">
-                          <object class="GtkBox">
-                            <property name="orientation">vertical</property>
-                            <property name="margin-top">20</property>
-                            <property name="margin-bottom">40</property>
-                            <property name="margin-start">40</property>
-                            <property name="margin-end">40</property>
-                            <property name="spacing">20</property>
-
-                            <child>
-                              <object class="GtkLabel">
-                                <property name="label">Live Data Feeds</property>
-                                <property name="halign">start</property>
-                                <style><class name="dashboard-title"/></style>
-                              </object>
-                            </child>
-
-                            <child>
-                              <object class="GtkBox">
-                                <property name="orientation">horizontal</property>
-                                <property name="spacing">20</property>
-                                <property name="homogeneous">true</property>
-                                
-                                <child>
+                          <object class="GtkScrolledWindow">
+                            <property name="hscrollbar-policy">never</property>
+                            <property name="child">
+                              <object class="AdwClamp">
+                                <property name="maximum-size">1200</property>
+                                <property name="tightening-threshold">800</property>
+                                <property name="child">
                                   <object class="GtkBox">
                                     <property name="orientation">vertical</property>
-                                    <property name="spacing">10</property>
-                                    <style><class name="card"/></style>
+                                    <property name="margin-top">16</property>
+                                    <property name="margin-bottom">24</property>
+                                    <property name="margin-start">16</property>
+                                    <property name="margin-end">16</property>
+                                    <property name="spacing">16</property>
+                                    <child><object class="GtkLabel"><property name="label">Live System Monitoring</property><property name="halign">start</property><style><class name="title-1"/></style></object></child>
                                     <child>
-                                      <object class="GtkLabel">
-                                        <property name="label">Server Load (CPU)</property>
-                                        <property name="halign">start</property>
-                                        <style><class name="section-title"/></style>
+                                      <object class="GtkFlowBox" id="live_charts_flow">
+                                        <property name="selection-mode">none</property>
+                                        <property name="row-spacing">16</property>
+                                        <property name="column-spacing">16</property>
+                                        <property name="homogeneous">true</property>
+                                        <property name="max-children-per-line">2</property>
+                                        <property name="min-children-per-line">1</property>
+                                        <child><object class="GtkFlowBoxChild"><property name="child"><object class="GtkFrame"><property name="child"><object class="GtkBox"><property name="orientation">vertical</property><property name="spacing">8</property><property name="margin-top">12</property><property name="margin-bottom">12</property><property name="margin-start">12</property><property name="margin-end">12</property><child><object class="GtkLabel"><property name="label">CPU Load</property><property name="halign">start</property><style><class name="title-4"/></style></object></child><child><object class="GtkDrawingArea" id="chart_live_cpu"><property name="height-request">200</property><property name="hexpand">true</property></object></child></object></property><style><class name="card"/></style></object></property></object></child>
+                                        <child><object class="GtkFlowBoxChild"><property name="child"><object class="GtkFrame"><property name="child"><object class="GtkBox"><property name="orientation">vertical</property><property name="spacing">8</property><property name="margin-top">12</property><property name="margin-bottom">12</property><property name="margin-start">12</property><property name="margin-end">12</property><child><object class="GtkLabel"><property name="label">Memory Usage</property><property name="halign">start</property><style><class name="title-4"/></style></object></child><child><object class="GtkDrawingArea" id="chart_live_mem"><property name="height-request">200</property><property name="hexpand">true</property></object></child></object></property><style><class name="card"/></style></object></property></object></child>
                                       </object>
                                     </child>
-                                    <child>
-                                      <object class="GtkDrawingArea" id="chart_live_cpu">
-                                        <property name="height-request">250</property>
-                                      </object>
-                                    </child>
+                                    <child><object class="GtkFrame"><property name="child"><object class="GtkBox"><property name="orientation">vertical</property><property name="spacing">8</property><property name="margin-top">12</property><property name="margin-bottom">12</property><property name="margin-start">12</property><property name="margin-end">12</property><child><object class="GtkLabel"><property name="label">Network Traffic</property><property name="halign">start</property><style><class name="title-4"/></style></object></child><child><object class="GtkDrawingArea" id="chart_live_net"><property name="height-request">250</property><property name="hexpand">true</property></object></child></object></property><style><class name="card"/></style></object></child>
                                   </object>
-                                </child>
-
-                                <child>
-                                  <object class="GtkBox">
-                                    <property name="orientation">vertical</property>
-                                    <property name="spacing">10</property>
-                                    <style><class name="card"/></style>
-                                    <child>
-                                      <object class="GtkLabel">
-                                        <property name="label">Memory Usage</property>
-                                        <property name="halign">start</property>
-                                        <style><class name="section-title"/></style>
-                                      </object>
-                                    </child>
-                                    <child>
-                                      <object class="GtkDrawingArea" id="chart_live_mem">
-                                        <property name="height-request">250</property>
-                                      </object>
-                                    </child>
-                                  </object>
-                                </child>
+                                </property>
                               </object>
-                            </child>
-
-                            <child>
-                                <object class="GtkBox">
-                                    <property name="orientation">vertical</property>
-                                    <property name="spacing">10</property>
-                                    <style><class name="card"/></style>
-                                    <child>
-                                      <object class="GtkLabel">
-                                        <property name="label">Network Traffic (Inbound/Outbound)</property>
-                                        <property name="halign">start</property>
-                                        <style><class name="section-title"/></style>
-                                      </object>
-                                    </child>
-                                    <child>
-                                      <object class="GtkDrawingArea" id="chart_live_net">
-                                        <property name="height-request">300</property>
-                                      </object>
-                                    </child>
-                                </object>
-                            </child>
-
+                            </property>
                           </object>
                         </property>
                       </object>
-                    </property>
-                  </object>
-                </child>
+                    </child>
 
-                <!-- Video Page -->
-                <child>
-                  <object class="GtkStackPage">
-                    <property name="name">video</property>
-                    <property name="title">Media Player</property>
-                    <property name="child">
-                      <object class="GtkBox">
-                        <property name="orientation">vertical</property>
-                        <property name="spacing">20</property>
-                        <property name="halign">center</property>
-                        <property name="valign">center</property>
-                        
-                        <child>
-                          <object class="GtkBox">
-                            <property name="orientation">horizontal</property>
-                            <property name="spacing">10</property>
-                            <child>
-                              <object class="GtkEntry" id="url_entry">
-                                <property name="placeholder-text">Enter Video URL...</property>
-                                <property name="width-request">400</property>
-                                <property name="text">https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4</property>
+                    <!-- Video Page -->
+                    <child>
+                      <object class="GtkStackPage">
+                        <property name="name">video</property>
+                        <property name="title">Media Player</property>
+                        <property name="child">
+                          <object class="GtkScrolledWindow">
+                            <property name="hscrollbar-policy">never</property>
+                            <property name="child">
+                              <object class="AdwClamp">
+                                <property name="maximum-size">800</property>
+                                <property name="child">
+                                  <object class="GtkBox">
+                                    <property name="orientation">vertical</property>
+                                    <property name="spacing">16</property>
+                                    <property name="margin-top">16</property>
+                                    <property name="margin-bottom">24</property>
+                                    <property name="margin-start">16</property>
+                                    <property name="margin-end">16</property>
+                                    <property name="halign">fill</property>
+                                    <child><object class="GtkLabel"><property name="label">Media Player</property><property name="halign">start</property><style><class name="title-1"/></style></object></child>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <property name="orientation">vertical</property>
+                                        <property name="spacing">8</property>
+                                        <child><object class="GtkEntry" id="url_entry"><property name="placeholder-text">Enter Video URL...</property><property name="hexpand">true</property><property name="text">https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4</property></object></child>
+                                        <child><object class="GtkButton" id="play_button"><property name="label">Play Video</property><property name="hexpand">true</property><style><class name="suggested-action"/><class name="pill"/></style></object></child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkFrame">
+                                        <property name="child">
+                                          <object class="GtkOverlay">
+                                            <property name="child">
+                                              <object class="GtkVideo" id="video_player">
+                                                <property name="autoplay">false</property>
+                                                <property name="loop">true</property>
+                                                <property name="height-request">200</property>
+                                                <property name="hexpand">true</property>
+                                              </object>
+                                            </property>
+                                          </object>
+                                        </property>
+                                        <style><class name="card"/><class name="video-card"/></style>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </property>
                               </object>
-                            </child>
-                            <child>
-                              <object class="GtkButton" id="play_button">
-                                <property name="label">Play</property>
-                                <property name="icon-name">media-playback-start-symbolic</property>
-                                <style>
-                                  <class name="suggested-action"/>
-                                </style>
-                              </object>
-                            </child>
+                            </property>
                           </object>
-                        </child>
-
-                        <child>
-                          <object class="GtkFrame">
-                            <property name="width-request">640</property>
-                            <property name="height-request">360</property>
-                            <child>
-                              <object class="GtkVideo" id="video_player">
-                                <property name="autoplay">false</property>
-                                <property name="loop">true</property>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
-
+                        </property>
                       </object>
-                    </property>
+                    </child>
                   </object>
-                </child>
-
+                </property>
               </object>
-            </child>
+            </property>
           </object>
         </property>
       </object>
