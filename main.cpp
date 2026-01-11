@@ -25,7 +25,6 @@ extern "C" GResource *resources_get_resource(void);
 #include <iphlpapi.h>
 #pragma comment(lib, "iphlpapi.lib")
 #endif
-#include <SDL2/SDL_platform.h>
 
 // --- Data Structures ---
 
@@ -91,12 +90,14 @@ static GtkBuilder *g_current_builder = NULL;
 static char *g_api_city_name = NULL;
 static guint search_timeout_id = 0;
 
+#ifndef __ANDROID__
 // SSE streaming state
 static SoupSession *sse_session = NULL;
 static GCancellable *sse_cancellable = NULL;
 static GInputStream *sse_stream = NULL;
 static std::string sse_buffer;
 static std::string current_sse_station_id;
+#endif
 
 // Mock Data Generator
 static AirQualityData get_mock_data(const char *city) {
@@ -1159,18 +1160,18 @@ static void on_search_result_selected(GtkListBox *box, GtkListBoxRow *row, gpoin
         gtk_widget_set_visible(GTK_WIDGET(dropdown_obj), FALSE);
     }
     
-    // Fetch detailed station data
-    waqi_fetch_station_data(result.station_id, current_station_data);
+    // Store builder globally for SSE callbacks
+    g_current_builder = builder;
     
-    // Update legacy data structure for compatibility
+    // Update legacy data structure with initial data from search
     g_free(g_api_city_name);
     g_api_city_name = g_strdup(result.station_name.c_str());
     current_aqi_data.city = g_api_city_name;
-    current_aqi_data.aqi = current_station_data.aqi;
-    current_aqi_data.pm25 = current_station_data.pm25;
-    current_aqi_data.pm10 = current_station_data.pm10;
+    current_aqi_data.aqi = result.aqi;  // Use AQI from search initially
+    current_aqi_data.pm25 = result.aqi * 0.6;  // Approximate until SSE provides real data
+    current_aqi_data.pm10 = result.aqi * 1.2;
     
-    // Set status based on AQI
+    // Set status based on initial AQI
     if (current_aqi_data.aqi <= 50) current_aqi_data.status = "Good 🟢";
     else if (current_aqi_data.aqi <= 100) current_aqi_data.status = "Satisfactory 🟡";
     else if (current_aqi_data.aqi <= 150) current_aqi_data.status = "Moderate 🟠";
@@ -1178,18 +1179,17 @@ static void on_search_result_selected(GtkListBox *box, GtkListBoxRow *row, gpoin
     else if (current_aqi_data.aqi <= 300) current_aqi_data.status = "Very Unhealthy 🔴";
     else current_aqi_data.status = "Hazardous ☠️";
     
-    // Copy hourly history for chart
+    // Initialize history with current AQI (will be updated by SSE)
     current_aqi_data.history.clear();
-    for (double val : current_station_data.pm25_history) {
-        current_aqi_data.history.push_back((int)val);
-    }
-    // Pad with zeros if not enough history
-    while (current_aqi_data.history.size() < 24) {
-        current_aqi_data.history.insert(current_aqi_data.history.begin(), current_aqi_data.aqi);
+    for (int i = 0; i < 24; i++) {
+        current_aqi_data.history.push_back(current_aqi_data.aqi);
     }
     
-    // Update display
+    // Show initial display immediately
     update_aqi_display(builder);
+    
+    // Start SSE stream for live updates (this is now async)
+    waqi_fetch_station_data(result.station_id, current_station_data);
 }
 
 // Populate search dropdown with results
@@ -1424,16 +1424,16 @@ static void on_fetch_aqi_clicked(GtkButton *button, gpointer user_data) {
     if (!search_results.empty()) {
         const WAQISearchResult &result = search_results[0];
         
-        // Fetch detailed station data
-        waqi_fetch_station_data(result.station_id, current_station_data);
+        // Store builder globally for SSE callbacks
+        g_current_builder = builder;
         
-        // Update legacy data structure
+        // Update legacy data structure with initial search data
         g_free(g_api_city_name);
         g_api_city_name = g_strdup(result.station_name.c_str());
         current_aqi_data.city = g_api_city_name;
-        current_aqi_data.aqi = current_station_data.has_data ? current_station_data.aqi : result.aqi;
-        current_aqi_data.pm25 = current_station_data.pm25;
-        current_aqi_data.pm10 = current_station_data.pm10;
+        current_aqi_data.aqi = result.aqi;
+        current_aqi_data.pm25 = result.aqi * 0.6;  // Approximate
+        current_aqi_data.pm10 = result.aqi * 1.2;
         
         // Set status
         if (current_aqi_data.aqi <= 50) current_aqi_data.status = "Good 🟢";
@@ -1443,29 +1443,26 @@ static void on_fetch_aqi_clicked(GtkButton *button, gpointer user_data) {
         else if (current_aqi_data.aqi <= 300) current_aqi_data.status = "Very Unhealthy 🔴";
         else current_aqi_data.status = "Hazardous ☠️";
         
-        // Copy history
+        // Initialize history
         current_aqi_data.history.clear();
-        for (double val : current_station_data.pm25_history) {
-            current_aqi_data.history.push_back((int)val);
+        for (int i = 0; i < 24; i++) {
+            current_aqi_data.history.push_back(current_aqi_data.aqi);
         }
-        while (current_aqi_data.history.size() < 24) {
-            current_aqi_data.history.insert(current_aqi_data.history.begin(), current_aqi_data.aqi);
-        }
+        
+        // Show initial display
+        update_aqi_display(builder);
+        
+        // Start SSE stream for live updates
+        waqi_fetch_station_data(result.station_id, current_station_data);
     } else {
         // Fallback to mock data
         current_aqi_data = get_mock_data(city);
+        update_aqi_display(builder);
     }
 #else
     current_aqi_data = get_mock_data(city);
-#endif
-    
-    // Hide search dropdown
-    GObject *dropdown_obj = gtk_builder_get_object(builder, "search_dropdown");
-    if (dropdown_obj) {
-        gtk_widget_set_visible(GTK_WIDGET(dropdown_obj), FALSE);
-    }
-    
     update_aqi_display(builder);
+#endif
 }
 
 static void on_play_clicked(GtkButton *button, gpointer user_data) {
@@ -1494,7 +1491,16 @@ static void on_sidebar_toggle_clicked(GtkToggleButton *button, gpointer user_dat
     if (!split_obj) return;
     
     gboolean active = gtk_toggle_button_get_active(button);
+    
+#ifndef __ANDROID__
     adw_navigation_split_view_set_show_content(ADW_NAVIGATION_SPLIT_VIEW(split_obj), !active);
+#else
+    // Android fallback: Use simple visibility toggle
+    GObject *sidebar_obj = gtk_builder_get_object(builder, "sidebar");
+    if (sidebar_obj) {
+        gtk_widget_set_visible(GTK_WIDGET(sidebar_obj), active);
+    }
+#endif
 }
 
 static void on_nav_row_selected(GtkListBox *box, GtkListBoxRow *row, gpointer user_data) {
@@ -1524,9 +1530,17 @@ static void on_nav_row_selected(GtkListBox *box, GtkListBoxRow *row, gpointer us
         }
         
         // Collapse sidebar on mobile after selection
+#ifndef __ANDROID__
         if (split_obj && adw_navigation_split_view_get_collapsed(ADW_NAVIGATION_SPLIT_VIEW(split_obj))) {
             g_object_set(split_obj, "show-sidebar", FALSE, NULL);
         }
+#else
+        // Android fallback: Simple hide
+        GObject *sidebar_obj = gtk_builder_get_object(builder, "sidebar");
+        if (sidebar_obj) {
+            gtk_widget_set_visible(GTK_WIDGET(sidebar_obj), FALSE);
+        }
+#endif
     }
 }
 
@@ -1595,13 +1609,24 @@ static void on_activate(GtkApplication *app, gpointer user_data) {
     
     // Explicitly ensure libadwaita widget types are registered
     // This is needed on Android because the types may not be auto-registered
+    // Register Adwaita widget types
     g_type_ensure(ADW_TYPE_APPLICATION_WINDOW);
     g_type_ensure(ADW_TYPE_HEADER_BAR);
     g_type_ensure(ADW_TYPE_CLAMP);
+    g_type_ensure(ADW_TYPE_WINDOW_TITLE);
+    
+#ifndef __ANDROID__
+    // These Adwaita widgets may not be available on Android
+    // On Android, the UI will use standard GTK4 widgets instead
     g_type_ensure(ADW_TYPE_NAVIGATION_SPLIT_VIEW);
     g_type_ensure(ADW_TYPE_NAVIGATION_PAGE);
     g_type_ensure(ADW_TYPE_TOOLBAR_VIEW);
-    g_type_ensure(ADW_TYPE_WINDOW_TITLE);
+#else
+    // Android: Use GTK4 equivalents (GtkPaned, GtkStack, GtkBox)
+    g_type_ensure(GTK_TYPE_PANED);
+    g_type_ensure(GTK_TYPE_STACK);
+    g_type_ensure(GTK_TYPE_BOX);
+#endif
     
     // Register GResource for Android only
 #ifdef __ANDROID__

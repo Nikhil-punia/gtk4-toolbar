@@ -1,5 +1,15 @@
 // VS Code API integration
-const vscode = acquireVsCodeApi();
+let vscode;
+try {
+    vscode = acquireVsCodeApi();
+    console.log('[GTK4 WebView] VS Code API acquired successfully');
+} catch (error) {
+    console.error('[GTK4 WebView] Failed to acquire VS Code API:', error);
+    // Graceful fallback - webview won't work but page won't crash
+    vscode = {
+        postMessage: (msg) => console.warn('[GTK4 WebView] postMessage called without VS Code API:', msg)
+    };
+}
 
 // Toast notification function
 function showToast(message, type = 'info') {
@@ -43,41 +53,48 @@ function showToast(message, type = 'info') {
 
 // Configuration Management
 function saveConfig() {
-    const config = {
-        msys2Path: document.getElementById('msys2Path').value,
-        msys2Environment: document.getElementById('msys2Environment').value,
-        compiler: document.getElementById('compiler').value,
-        cppStandard: document.getElementById('cppStandard').value,
-        compilerFlags: document.getElementById('compilerFlags').value,
-        pkgConfigLibraries: document.getElementById('pkgConfigLibraries').value,
-        cmakeGenerator: document.getElementById('cmakeGenerator').value,
-        cmakeBuildType: document.getElementById('cmakeBuildType').value,
-        cmakeArgs: document.getElementById('cmakeArgs').value,
-        autoCloseTerminal: document.getElementById('autoCloseTerminal').checked,
-        showSuccessNotifications: document.getElementById('showSuccessNotifications').checked,
-        customEnvVars: getEnvVarsFromUI()
-    };
+    try {
+        const config = {
+            msys2Path: document.getElementById('msys2Path').value,
+            msys2Environment: document.getElementById('msys2Environment').value,
+            compiler: document.getElementById('compiler').value,
+            cppStandard: document.getElementById('cppStandard').value,
+            compilerFlags: document.getElementById('compilerFlags').value,
+            pkgConfigLibraries: document.getElementById('pkgConfigLibraries').value,
+            cmakeGenerator: document.getElementById('cmakeGenerator').value,
+            cmakeBuildType: document.getElementById('cmakeBuildType').value,
+            cmakeArgs: document.getElementById('cmakeArgs').value,
+            autoCloseTerminal: document.getElementById('autoCloseTerminal').checked,
+            showSuccessNotifications: document.getElementById('showSuccessNotifications').checked,
+            customEnvVars: getEnvVarsFromUI()
+        };
 
-    console.log('[GTK4 WebView] Sending saveConfig:', config);
+        console.log('[GTK4 WebView] Sending saveConfig:', config);
 
-    // Send message to extension
-    vscode.postMessage({
-        command: 'saveConfig',
-        data: config
-    });
+        // Send message to extension
+        vscode.postMessage({
+            command: 'saveConfig',
+            data: config
+        });
 
-    // Visual Feedback
-    const btn = document.querySelector('button[onclick="saveConfig()"]');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-check me-2"></i>Saved!';
-    btn.classList.remove('btn-primary');
-    btn.classList.add('btn-success');
-    
-    setTimeout(() => {
-        btn.innerHTML = originalText;
-        btn.classList.remove('btn-success');
-        btn.classList.add('btn-primary');
-    }, 2000);
+        // Visual Feedback
+        const btn = document.querySelector('button[onclick="saveConfig()"]');
+        if (btn) {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check me-2"></i>Saved!';
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-success');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-primary');
+            }, 2000);
+        }
+    } catch (error) {
+        console.error('[GTK4 WebView] Error in saveConfig:', error);
+        showToast('Error saving config: ' + error.message, 'error');
+    }
 }
 
 // --- Environment Variables Logic ---
@@ -255,6 +272,7 @@ function applyTheme(themeName) {
 // Handle messages from the extension
 window.addEventListener('message', event => {
     const message = event.data;
+    console.log('[GTK4 WebView] Received message from extension:', message.command, message);
 
     switch (message.command) {
         case 'loadConfig':
@@ -442,6 +460,9 @@ window.addEventListener('message', event => {
             break;
         case 'showReleaseSelection':
             showReleaseSelectionModal(message.releases, message.repo, message.dirName);
+            break;
+        case 'updateAdbDevices':
+            renderAdbDevices(message.devices);
             break;
     }
 });
@@ -840,11 +861,68 @@ function installPixiewood() {
 
 // Initial load
 document.addEventListener('DOMContentLoaded', () => {
-    loadConfig();
-    renderThemes();
-    refreshInstalledThemes();
-    renderCommonPlugins();
-    // Status check will happen after config load
+    try {
+        console.log('[GTK4 WebView] DOM Content Loaded - Starting initialization');
+        
+        loadConfig();
+        console.log('[GTK4 WebView] Config loaded');
+        
+        renderThemes();
+        console.log('[GTK4 WebView] Themes rendered');
+        
+        refreshInstalledThemes();
+        console.log('[GTK4 WebView] Installed themes refreshed');
+        
+        renderCommonPlugins();
+        console.log('[GTK4 WebView] Common plugins rendered');
+        
+        // Bind floating ADB button if present
+        const adbBtn = document.getElementById('adbFloatingBtn');
+        if (adbBtn) {
+            adbBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('[GTK4 WebView] ADB floating button clicked');
+                openAdbMenu();
+            });
+            console.log('[GTK4 WebView] ADB floating button bound successfully');
+        } else {
+            console.warn('[GTK4 WebView] ADB floating button element not found');
+        }
+        
+        // Show/hide floating ADB button based on active tab
+        const androidTab = document.getElementById('tab-android');
+        const adbFloatingContainer = document.getElementById('adb-floating-container');
+        
+        if (androidTab && adbFloatingContainer) {
+            // Show button when Android tab is shown
+            androidTab.addEventListener('shown.bs.tab', () => {
+                console.log('[GTK4 WebView] Android tab activated - showing floating button');
+                adbFloatingContainer.style.display = 'block';
+            });
+            
+            // Hide button when navigating away from Android tab
+            const allTabs = document.querySelectorAll('[data-bs-toggle="tab"]');
+            allTabs.forEach(tab => {
+                if (tab.id !== 'tab-android') {
+                    tab.addEventListener('shown.bs.tab', () => {
+                        console.log('[GTK4 WebView] Non-Android tab activated - hiding floating button');
+                        adbFloatingContainer.style.display = 'none';
+                    });
+                }
+            });
+            
+            // Check if Android tab is initially active
+            if (androidTab.classList.contains('active')) {
+                console.log('[GTK4 WebView] Android tab is initially active - showing floating button');
+                adbFloatingContainer.style.display = 'block';
+            }
+        }
+        
+        console.log('[GTK4 WebView] Initialization complete');
+    } catch (error) {
+        console.error('[GTK4 WebView] Error during initialization:', error);
+        showToast('Initialization error: ' + error.message, 'error');
+    }
 });
 
 // --- Plugins Manager Logic ---
@@ -1008,4 +1086,93 @@ function displaySearchResults(results) {
         });
     });
 }
+
+// --- ADB Devices ---
+
+function openAdbMenu() {
+    try {
+        console.log('[GTK4 WebView] openAdbMenu called');
+        const adbModalEl = document.getElementById('adbModal');
+        if (!adbModalEl) {
+            console.error('[GTK4 WebView] adbModal element not found');
+            showToast('ADB modal not found', 'error');
+            return;
+        }
+        const modal = new bootstrap.Modal(adbModalEl);
+        modal.show();
+        refreshAdbDevices();
+        console.log('[GTK4 WebView] ADB modal opened successfully');
+    } catch (error) {
+        console.error('[GTK4 WebView] Error in openAdbMenu:', error);
+        showToast('Error opening ADB menu: ' + error.message, 'error');
+    }
+}
+
+function refreshAdbDevices() {
+    try {
+        console.log('[GTK4 WebView] refreshAdbDevices called');
+        const list = document.getElementById('adbDeviceList');
+        if (!list) {
+            console.error('[GTK4 WebView] adbDeviceList element not found');
+            return;
+        }
+        list.innerHTML = '<div class="text-center p-3"><i class="fas fa-spinner fa-spin text-primary"></i> <span class="ms-2">Scanning devices...</span></div>';
+        
+        vscode.postMessage({
+            command: 'getAdbDevices'
+        });
+        console.log('[GTK4 WebView] ADB device scan request sent');
+    } catch (error) {
+        console.error('[GTK4 WebView] Error in refreshAdbDevices:', error);
+    }
+}
+
+function renderAdbDevices(devices) {
+    const list = document.getElementById('adbDeviceList');
+    list.innerHTML = '';
+
+    if (!devices || devices.length === 0) {
+        list.innerHTML = '<div class="text-center p-3 text-muted">No connected devices found.<br><small>Make sure USB debugging is enabled.</small></div>';
+        return;
+    }
+
+    devices.forEach(device => {
+        const item = document.createElement('a');
+        item.href = '#';
+        item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+        item.onclick = (e) => {
+            e.preventDefault();
+            loadAppToDevice(device.serial);
+        };
+
+        item.innerHTML = `
+            <div>
+                <div class="fw-bold"><i class="fas fa-mobile-alt me-2"></i>${device.model || 'Unknown Device'}</div>
+                <small class="text-muted text-monospace">${device.serial} (${device.state})</small>
+            </div>
+            <button class="btn btn-sm btn-outline-success">
+                <i class="fas fa-play me-1"></i> Load App
+            </button>
+        `;
+        list.appendChild(item);
+    });
+}
+
+function loadAppToDevice(serial) {
+    // Show toast
+    showToast(`Deploying to ${serial}...`, 'info');
+    
+    vscode.postMessage({
+        command: 'loadAppToDevice',
+        serial: serial
+    });
+    
+    // Hide modal
+    const modalEl = document.getElementById('adbModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) {
+        modal.hide();
+    }
+}
+
 

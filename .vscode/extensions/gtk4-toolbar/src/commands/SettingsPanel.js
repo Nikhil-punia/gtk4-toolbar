@@ -74,18 +74,28 @@ class SettingsPanel {
         const indexHtmlPath = path.join(webPath, 'index.html');
         let htmlContent = fs.readFileSync(indexHtmlPath, 'utf8');
 
-        // Replace paths with webview URIs
+        // Replace paths with webview URIs using robust regex patterns
         const scriptUri = webview.asWebviewUri(vscode.Uri.file(path.join(webPath, 'script.js')));
         const styleUri = webview.asWebviewUri(vscode.Uri.file(path.join(webPath, 'style.css')));
         const bootstrapCssUri = webview.asWebviewUri(vscode.Uri.file(path.join(webPath, 'lib', 'bootstrap.min.css')));
         const bootstrapJsUri = webview.asWebviewUri(vscode.Uri.file(path.join(webPath, 'lib', 'bootstrap.bundle.min.js')));
+        const fontAwesomeCssUri = webview.asWebviewUri(vscode.Uri.file(path.join(webPath, 'lib', 'fontawesome', 'css', 'all.min.css')));
+        const robotoFontCssUri = webview.asWebviewUri(vscode.Uri.file(path.join(webPath, 'lib', 'fonts', 'roboto-local.css')));
+        const logoUri = webview.asWebviewUri(vscode.Uri.file(path.join(webPath, 'lib', 'logo.png')));
 
         const cspSource = webview.cspSource;
+        
+        // Replace CSP source
         htmlContent = htmlContent.replace(/{{cspSource}}/g, cspSource);
-        htmlContent = htmlContent.replace('script.js', scriptUri.toString());
-        htmlContent = htmlContent.replace('style.css', styleUri.toString());
-        htmlContent = htmlContent.replace('lib/bootstrap.min.css', bootstrapCssUri.toString());
-        htmlContent = htmlContent.replace('lib/bootstrap.bundle.min.js', bootstrapJsUri.toString());
+        
+        // Use regex to replace only src/href attributes to avoid replacing text content
+        htmlContent = htmlContent.replace(/src\s*=\s*["']script\.js["']/g, `src="${scriptUri.toString()}"`);
+        htmlContent = htmlContent.replace(/href\s*=\s*["']style\.css["']/g, `href="${styleUri.toString()}"`);
+        htmlContent = htmlContent.replace(/href\s*=\s*["']lib\/bootstrap\.min\.css["']/g, `href="${bootstrapCssUri.toString()}"`);
+        htmlContent = htmlContent.replace(/src\s*=\s*["']lib\/bootstrap\.bundle\.min\.js["']/g, `src="${bootstrapJsUri.toString()}"`);
+        htmlContent = htmlContent.replace(/href\s*=\s*["']lib\/fontawesome\/css\/all\.min\.css["']/g, `href="${fontAwesomeCssUri.toString()}"`);
+        htmlContent = htmlContent.replace(/href\s*=\s*["']lib\/fonts\/roboto-local\.css["']/g, `href="${robotoFontCssUri.toString()}"`);
+        htmlContent = htmlContent.replace(/src\s*=\s*["']lib\/logo\.png["']/g, `src="${logoUri.toString()}"`);
 
         return htmlContent;
     }
@@ -245,6 +255,15 @@ class SettingsPanel {
             // ============== Tools ==============
             case 'openGlade':
                 this.openGlade();
+                break;
+
+            // ============== ADB Device Management ==============
+            case 'getAdbDevices':
+                await this.getAdbDevices();
+                break;
+
+            case 'loadAppToDevice':
+                await this.loadAppToDevice(message.serial);
                 break;
 
             default:
@@ -1813,6 +1832,96 @@ add_executable(main \${SOURCES})
     postMessage(message) {
         if (this.panel) {
             this.panel.webview.postMessage(message);
+        }
+    }
+
+    /**
+     * Get ADB Devices
+     */
+    async getAdbDevices() {
+        try {
+            const config = ConfigManager.getAll();
+            const adbPath = config.androidSdkPath 
+                ? path.join(config.androidSdkPath, 'platform-tools', 'adb.exe')
+                : 'adb';
+
+            Logger.debug(`Running ADB: ${adbPath} devices -l`);
+
+            cp.exec(`"${adbPath}" devices -l`, (err, stdout, stderr) => {
+                if (err) {
+                    Logger.error('ADB Error: ' + err.message);
+                    this.postMessage({ command: 'updateAdbDevices', devices: [] });
+                    return;
+                }
+
+                const devices = [];
+                const lines = stdout.split('\n');
+                // Skip first line "List of devices attached"
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    const parts = line.split(/\s+/);
+                    if (parts.length >= 2) {
+                        const serial = parts[0];
+                        const state = parts[1];
+                        
+                        // Extract model: model:Pixel_6 or similar
+                        let model = 'Unknown';
+                        const modelPart = parts.find(p => p.startsWith('model:'));
+                        if (modelPart) model = modelPart.substring(6).replace(/_/g, ' ');
+                        
+                        devices.push({ serial, state, model });
+                    }
+                }
+                
+                this.postMessage({ command: 'updateAdbDevices', devices });
+            });
+        } catch (e) {
+            Logger.error(e);
+            this.postMessage({ command: 'updateAdbDevices', devices: [] });
+        }
+    }
+
+    /**
+     * Load App to Device
+     */
+    async loadAppToDevice(serial) {
+        try {
+            const config = ConfigManager.getAll();
+            const adbPath = config.androidSdkPath 
+                ? path.join(config.androidSdkPath, 'platform-tools', 'adb.exe')
+                : 'adb';
+                
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            if (!workspaceFolders) return;
+            const root = workspaceFolders[0].uri.fsPath;
+            
+            // Expected APK path
+            const apkPath = path.join(root, '.pixiewood', 'android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
+            
+            if (!fs.existsSync(apkPath)) {
+                vscode.window.showErrorMessage('APK not found! Please build the project first.');
+                return;
+            }
+
+            vscode.window.showInformationMessage(`Installing App to ${serial}...`);
+            
+            // Use quotes for paths to handle spaces
+            const command = `"${adbPath}" -s ${serial} install -r "${apkPath}"`;
+            
+            cp.exec(command, (err, stdout, stderr) => {
+                if (err) {
+                    Logger.error('Installation failed: ' + stderr);
+                    vscode.window.showErrorMessage('Installation failed. Check "GTK4 Toolbar" output for details.');
+                    return;
+                }
+                vscode.window.showInformationMessage('App installed successfully on ' + serial);
+            });
+            
+        } catch (e) {
+            Logger.error(e);
+            vscode.window.showErrorMessage('Error loading app: ' + e.message);
         }
     }
 

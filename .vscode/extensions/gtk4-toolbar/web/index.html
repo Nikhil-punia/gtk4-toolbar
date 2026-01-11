@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; script-src {{cspSource}} 'unsafe-inline' https://cdnjs.cloudflare.com; font-src {{cspSource}} https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src {{cspSource}} https: data:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}} 'unsafe-inline'; font-src {{cspSource}}; img-src {{cspSource}} https: data:;">
     <title>GTK4 Toolbar Configuration</title>
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet"/>
+    <!-- Font Awesome Local -->
+    <link href="lib/fontawesome/css/all.min.css" rel="stylesheet"/>
+    <!-- Roboto Font Local -->
+    <link href="lib/fonts/roboto-local.css" rel="stylesheet"/>
     <!-- Bootstrap Local -->
     <link href="lib/bootstrap.min.css" rel="stylesheet"/>
     <link rel="stylesheet" href="style.css">
@@ -28,11 +28,23 @@
 
         /* Navbar */
         .navbar {
-            background-color: var(--vscode-titleBar-activeBackground) !important;
-            border-bottom: 1px solid var(--vscode-widget-border);
+            background-color: var(--vscode-tab-unfocusedInactiveBackground)!important;
+            border-top: 1px solid var(--vscode-panel-border);
+            padding: 0.5rem 1rem !important;
         }
         .navbar-brand {
             color: var(--vscode-titleBar-activeForeground) !important;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .navbar-brand img {
+            height: 36px;
+            width: auto;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         /* Cards */
@@ -128,12 +140,12 @@
         }
     </style>
 </head>
-<body>
+<body class="p-0">
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg w-100 d-flex bg-body-tertiary shadow-sm mb-4">
+    <nav class="navbar navbar-expand-lg w-100 d-flex bg-body-tertiary">
         <div class="container-fluid">
-            <a class="navbar-brand mt-2 mt-lg-0" href="#">
-                <i class="fas fa-tools text-primary me-2"></i>
+            <a class="navbar-brand" href="#">
+                <img src="lib/logo.png" alt="GTK4 Toolbar" />
                 GTK4 Toolbar
             </a>
         </div>
@@ -577,6 +589,9 @@
                                     <i class="fab fa-android me-2"></i>3. Build APK
                                 </button>
                             </div>
+
+                            <!-- ADB Floating Menu (moved to body as a fixed floating button) -->
+                            <!-- The floating button is intentionally left out here so it doesn't get clipped by card/scroll containers -->
                         </form>
                     </div>
                 </div>
@@ -653,7 +668,7 @@
                         </div>
                         
                         <div class="mt-4">
-                            <p class="small text-muted">Developed for the VS Code Community</p>
+                            <p class="small text-muted">Developed for the VS Code Community With ❤️</p>
                             <a href="https://github.com/yourusername/gtk4-toolbar" class="btn btn-outline-dark btn-sm" target="_blank">
                                 <i class="fab fa-github me-2"></i>View on GitHub
                             </a>
@@ -663,6 +678,38 @@
             </div>
 
         </div>
+    </div>
+
+    <!-- ADB Devices Modal -->
+    <div class="modal fade" id="adbModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fab fa-android me-2 text-success"></i>Select Android Device</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="adbDeviceList" class="list-group">
+                        <div class="text-center p-3">
+                            <i class="fas fa-spinner fa-spin text-primary"></i> <span class="ms-2">Scanning devices...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" onclick="refreshAdbDevices()">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed Floating ADB Button (only visible on Android tab) -->
+    <div id="adb-floating-container" style="position:fixed; bottom:20px; right:20px; z-index:1100; display:none;">
+        <button id="adbFloatingBtn" type="button" class="btn btn-primary rounded-circle shadow p-3" title="Manage ADB Devices" style="width:60px; height:60px; display:flex; align-items:center; justify-content:center;">
+            <i class="fas fa-mobile-alt fa-lg"></i>
+        </button>
     </div>
 
     <!-- Bootstrap Local -->
