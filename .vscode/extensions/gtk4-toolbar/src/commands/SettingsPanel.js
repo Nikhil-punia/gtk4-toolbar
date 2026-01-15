@@ -1898,7 +1898,7 @@ add_executable(main \${SOURCES})
             const root = workspaceFolders[0].uri.fsPath;
             
             // Expected APK path
-            const apkPath = path.join(root, '.pixiewood', 'android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
+            const apkPath = path.join(root, '.pixiewood', 'android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-universal-debug.apk');
             
             if (!fs.existsSync(apkPath)) {
                 vscode.window.showErrorMessage('APK not found! Please build the project first.');

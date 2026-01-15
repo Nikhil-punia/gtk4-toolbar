@@ -6,48 +6,59 @@ project('my-gtk4-app', ['c', 'cpp'],
   ]
 )
 
-# Import gnome module for glib-compile-resources
+# Import gnome module
 gnome = import('gnome')
 
-# Dependencies
+# --- Dependencies ---
+
+# 1. Core GTK/Adwaita
 gtk4_dep = dependency('gtk4')
 adwaita_dep = dependency('libadwaita-1')
+
+# 2. Networking (Libsoup + Glib-Networking for HTTPS)
+# We use 'fallback' to ensure Meson uses the subprojects/ folders if the SDK is missing them.
+libsoup_dep = dependency('libsoup-3.0', fallback: ['libsoup', 'libsoup_dep'])
+
+# glib-networking is a GIO module. We add it here to ensure it gets compiled 
+# and installed into the APK. Without this, HTTPS will fail.
+glib_net_dep = dependency('glib-networking-2.0', 
+  fallback: ['glib-networking', 'glib_networking_dep'],
+  required: true
+)
+
+# 3. Multimedia (Optional)
 gstreamer_dep = dependency('gstreamer-1.0', required: false)
 
-deps = [gtk4_dep, adwaita_dep]
+# Combine all dependencies
+deps = [gtk4_dep, adwaita_dep, libsoup_dep, glib_net_dep]
 
-# Add GStreamer if available
 if gstreamer_dep.found()
   deps += gstreamer_dep
 endif
 
-# Compile resources (layout.ui etc.)
+# --- Resources & Sources ---
+
 resources = gnome.compile_resources(
   'resources',
   'resources.gresource.xml',
   source_dir: meson.current_source_dir(),
 )
 
-# Source files
 sources = files('main.cpp') + resources
 
-# Platform-specific configuration
-host_system = host_machine.system()
+# --- Platform Specifics ---
 
+host_system = host_machine.system()
 cpp_args = []
 link_args = []
 
 if host_system == 'windows'
-  # Windows-specific libraries
   cpp_args += ['-DNOMINMAX']
   link_args += ['-liphlpapi']
-elif host_system == 'linux' or host_system == 'android'
-  # Linux/Android doesn't need the Windows-specific code
-  # The code should be wrapped in #ifdef _WIN32 which will exclude it
 endif
 
-# Build executable
-# For Android, the forked meson requires 'android_exe_type: application'
+# --- Build Target ---
+
 if host_system == 'android'
   executable('hello',
     sources,

@@ -1,20 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-    Pixiewood Manifest File
-    Documentation: https://github.com/sp1ritCS/gtk-android-builder
-    
-    This file defines how your GTK4 application should be built for Android.
-    Uses the official pixiewood format with pw:app namespace.
--->
-<app xmlns="https://sp1rit.arpa/pixiewood/" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <!-- Metainfo: Include AppStream metadata file -->
+<app xmlns="https://sp1rit.arpa/pixiewood/" xmlns:xi="http://www.w3.org/2001/XInclude" version="1">
     <metainfo vercalc="count">
-        <xi:include href="src:com.example.mygtk4app.metainfo.xml" parse="xml"/>
+       <component type="desktop-application" xmlns="https://specifications.freedesktop.org/metainfo/1.0">
+            <id>com.example.mygtk4app</id>
+            <name>My GTK4 App</name>
+            <summary>GTK4 app built for Android</summary>
+            <metadata_license>CC0-1.0</metadata_license>
+            <project_license>GPL-3.0-or-later</project_license>
+            <releases>
+                <release version="1.0.0" date="2024-01-01">
+                    <description><p>Initial release</p></description>
+                </release>
+            </releases>
+            <provides>
+                <binary>hello</binary>
+            </provides>
+        </component>
     </metainfo>
     
-    <!-- Style and icon configuration -->
     <style>
-        <!-- Available themes: "gtk" or "adw" (for libadwaita) -->
         <theme name="adw"/>
         <icon type="generate">
             <drawable target="foreground" type="avd" path="src:icon.xml"/>
@@ -22,23 +26,46 @@
         </icon>
     </style>
     
-    <!-- Dependencies: GTK libraries to build for Android -->
     <dependencies>
-        <glib revision="2.84.0">
-            <patch>hack</patch>
-        </glib>
+        <glib revision="2.84.0"><patch>hack</patch></glib>
         <harfbuzz/>
         <fontconfig/>
         <gdk-pixbuf/>
         <gtk/>
-        <libadwaita/>
+        
+        <libadwaita>
+            <patch>no-appstream</patch>
+        </libadwaita>
+        
+        <glib-networking><patch>fix-dependency</patch></glib-networking>
+        <libsoup/>
+        <sqlite3/>
+        <nghttp2/>
+        <libpsl/>
+        
+        <openssl/>
     </dependencies>
     
-    <!-- Build configuration -->
     <build target="hello">
         <architectures>
             <arch>aarch64</arch>
-            <!-- <arch>x86_64</arch> -->
         </architectures>
+        
+        <configure-options>
+            <option>-Dglib-networking:gnutls=disabled</option>
+            <option>-Dglib-networking:openssl=enabled</option>
+            
+            <option>-Dglib-networking:gnome_proxy=disabled</option>
+            <option>-Dglib-networking:libproxy=disabled</option>
+            
+            <option>-Dlibsoup:brotli=disabled</option>
+            <option>-Dlibsoup:introspection=disabled</option>
+            <option>-Dlibsoup:tests=false</option>
+            <option>-Dlibsoup:vapi=disabled</option>
+
+            <option>-Dlibadwaita:tests=false</option>
+            <option>-Dlibadwaita:examples=false</option>
+            
+            </configure-options>
     </build>
 </app>

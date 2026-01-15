@@ -1,0 +1,265 @@
+diff --git a/pixiewood b/pixiewood
+index d2abc98..5a6d2d2 100755
+--- a/pixiewood
++++ b/pixiewood
+@@ -19,11 +19,11 @@
+ use strict;
+ use warnings;
+ use Archive::Tar;
+-use Cwd qw(abs_path);
+-use File::Basename qw(fileparse);
++use Cwd qw(abs_path getcwd);
++use File::Basename qw(fileparse dirname);
+ use File::Copy qw(copy);
+ use File::Find qw(find);
+-use File::Path qw(make_path);
++use File::Path qw(make_path rmtree);
+ use File::Spec::Functions qw(catfile rel2abs);
+ use Getopt::Long qw(GetOptions);
+ use Glib;
+@@ -317,7 +317,11 @@ my %actions = (
+ 
+ 		print "Generating toolchain crossfile\n" if $verbose;
+ 		my $tcc = Glib::KeyFile->new;
+-		$tcc->set_string("constants", "toolchain", "'$toolchain/toolchains/llvm/prebuilt/linux-x86_64/'");
++		# Detect host OS for NDK toolchain path (auto-patched for Windows)
++		my $host_tag = $^O eq 'MSWin32' || $^O eq 'msys' || $^O eq 'cygwin' ? 'windows-x86_64' : 'linux-x86_64';
++		my $cmd_ext = $^O eq 'MSWin32' || $^O eq 'msys' || $^O eq 'cygwin' ? '.cmd' : '';
++		$tcc->set_string("constants", "toolchain", "'$toolchain/toolchains/llvm/prebuilt/$host_tag/'");
++		$tcc->set_string("constants", "cmd_ext", "'$cmd_ext'");
+ 		open my $tccfh, ">", "$pixiewood_dirname/toolchain.cross" or die("Failed to open toolchain crossfile for writing");
+ 		print $tccfh $tcc->to_data;
+ 		close $tccfh;
+@@ -693,11 +697,54 @@ my %actions = (
+ 		sub force_symlink {
+ 			my ($target, $new) = @_;
+ 
++			# Try symlink first
+ 			return 1 if symlink($target, $new);
+ 			if ($!{EEXIST}) {
+-				unlink($new) or return undef;
+-				symlink($target, $new) or return undef;
++				unlink($new) or rmtree($new);
++				return 1 if symlink($target, $new);
++			}
++			
++			# Symlink failed - fall back to copy (for Windows)
++			print "Symlink failed, falling back to copy: $target -> $new\n" if $verbose;
++			if (-d $target) {
++				# Copy directory recursively using Perl
++				rmtree($new) if -e $new;
++				make_path($new);
++				
++				# Get absolute paths and normalize
++				my $target_abs = rel2abs($target);
++				my $new_abs = rel2abs($new);
++				my $target_len = length($target_abs);
++				
++				# Recursive copy using File::Find
++				find(sub {
++					my $src = $File::Find::name;
++					
++					# Get the relative portion by comparing absolute paths
++					my $src_abs = rel2abs($src);
++					return if $src_abs eq $target_abs; # Skip the root directory itself
++					
++					# Calculate relative path by stripping the target prefix
++					my $rel = substr($src_abs, $target_len);
++					$rel =~ s/^[\\\/]+//; # Remove leading slashes
++					return unless $rel; # Skip if no relative part
++					
++					my $dest = catfile($new_abs, split(/[\\\/]/, $rel));
++					
++					if (-d $src) {
++						make_path($dest);
++					} elsif (-f $src) {
++						my $dest_dir = dirname($dest);
++						make_path($dest_dir) unless -d $dest_dir;
++						copy($src, $dest) or warn "Failed to copy $src to $dest: $!";
++					}
++				}, $target_abs);
+ 				return 1;
++			} elsif (-f $target) {
++				# Copy file
++				unlink($new) if -e $new;
++				make_path(dirname($new));
++				return copy($target, $new) ? 1 : undef;
+ 			}
+ 			return undef;
+ 		}
+@@ -707,7 +754,17 @@ my %actions = (
+ 		$java_sources = "subprojects/gtk/gdk/android/glue/java/" unless $java_sources;
+ 		force_symlink(rel2abs(catfile($java_sources, "org/gtk/android")), catfile($output_dir, "app/src/main/java/org/gtk/android")) or die "Failed to symlink java sources: $!";
+ 
+-		force_symlink("../../../../root/lib", catfile($output_dir, "app/src/main/jniLibs")) or die "Failed to symlink libraries: $!";
++		# For jniLibs - the root/lib directory is created during 'build' step, not 'generate'
++		# On Linux, a dangling symlink is OK. On Windows, we create the jniLibs dir now and
++		# the build step will copy/link the actual libraries later.
++		my $jniLibs_path = catfile($output_dir, "app/src/main/jniLibs");
++		my $libs_target = catfile($pixiewood_dirname, "root/lib");
++		if (!symlink("../../../../root/lib", $jniLibs_path)) {
++			# Symlink failed (Windows) - just create an empty directory for now
++			# The build step will need to populate it
++			print "Note: Creating jniLibs directory (will be populated during build)\n" if $verbose;
++			make_path($jniLibs_path);
++		}
+ 	},
+ 	"build" => sub {
+ 		my $skip_gradle = 0;
+@@ -742,6 +799,106 @@ my %actions = (
+ 			run \@cmd or die('Failed to install files');
+ 		}
+ 
++		# On Windows, jniLibs is a real directory (not a symlink), so we need to copy the libs
++		my $jniLibs_path = catfile($pixiewood_dirname, "android/app/src/main/jniLibs");
++		my $root_lib = catfile($pixiewood_dirname, "root/lib");
++		if (-d $jniLibs_path && !-l $jniLibs_path && -d $root_lib) {
++			print "Copying libraries to jniLibs (Windows fallback)...\n" if $verbose;
++			rmtree($jniLibs_path);
++			make_path($jniLibs_path);
++			my $root_lib_abs = rel2abs($root_lib);
++			my $jniLibs_abs = rel2abs($jniLibs_path);
++			my $root_lib_len = length($root_lib_abs);
++
++			# patched 
++
++			find(sub {
++				my $src = $File::Find::name;
++				# Only process files (skip directories)
++				return unless -f $src;
++				
++				my $src_abs = rel2abs($src);
++				my $rel = substr($src_abs, $root_lib_len);
++				$rel =~ s/^[\\\\\\\\]+//;
++				return unless $rel;
++				
++				# Split path: e.g., "arm64-v8a/gio/modules/libgioopenssl.so"
++				my @parts = split(/[\\\\\\\\]/, $rel);
++				
++				# Ensure we have at least Architecture and Filename
++				if (scalar @parts >= 2) {
++					my $arch = shift @parts;      # First part is Architecture (e.g., "arm64-v8a")
++					my $filename = pop @parts;    # Last part is Filename (e.g., "libgioopenssl.so")
++					
++					# Ignore intermediate directories (e.g., "gio", "modules")
++					# Construct new destination: jniLibs/<arch>/<filename>
++					my $dest_dir = catfile($jniLibs_abs, $arch);
++					make_path($dest_dir) unless -d $dest_dir;
++					
++					my $dest = catfile($dest_dir, $filename);
++					
++					print "Flattening: $rel -> $arch/$filename\n" if $verbose;
++					copy($src, $dest) or warn "Failed to copy $src to $dest: $!";
++				}
++			}, $root_lib_abs);
++			
++			my $ndk_path = $cfg->{'android-ndk'};
++
++            # Fallback: If toolchain path is missing (common in 'build' step), read from local.properties
++            unless ($ndk_path) {
++                my $props_file = catfile($pixiewood_dirname, "android/local.properties");
++                if (-f $props_file) {
++                    if (open my $fh, '<', $props_file) {
++                        while (my $line = <$fh>) {
++                            if ($line =~ /^ndk\.dir\s*=\s*(.*)$/) {
++                                my $ndk_root = $1;
++                                $ndk_root =~ s/^\s+|\s+$//g; # Trim whitespace
++                                # Construct the toolchain path assuming Windows host
++                                $ndk_path = "$ndk_root/toolchains/llvm/prebuilt/windows-x86_64";
++                                last;
++                            }
++                        }
++                        close $fh;
++                    }
++                }
++            }
++
++            if ($ndk_path) {
++                $ndk_path =~ s/[\\\\]+/\//g; # Fix slashes
++
++                # --- FIX START: Append Toolchain Path ---
++                # Check if we are pointing to NDK root (missing 'toolchains')
++                unless ($ndk_path =~ /toolchains\/llvm\/prebuilt/) {
++                    # Detect host OS to pick correct folder (windows-x86_64 vs linux-x86_64)
++                    my $host_tag = $^O eq 'MSWin32' || $^O eq 'msys' || $^O eq 'cygwin' ? 'windows-x86_64' : 'linux-x86_64';
++                    $ndk_path .= "/toolchains/llvm/prebuilt/$host_tag";
++                }
++                # --- FIX END ---
++                
++                for my $arch_dir (glob("$jniLibs_abs/*")) {
++                    next unless -d $arch_dir;
++                    my $arch_name = (fileparse($arch_dir))[0];
++                    my $ndk_arch = $arch_name eq 'arm64-v8a' ? 'aarch64-linux-android' :
++                                   $arch_name eq 'armeabi-v7a' ? 'arm-linux-androideabi' :
++                                   $arch_name eq 'x86_64' ? 'x86_64-linux-android' :
++                                   $arch_name eq 'x86' ? 'i686-linux-android' : undef;
++                    next unless $ndk_arch;
++                    
++                    # toolchain path + sysroot path
++                    my $libcpp = "$ndk_path/sysroot/usr/lib/$ndk_arch/libc++_shared.so";
++                    
++                    if (-f $libcpp) {
++                        copy($libcpp, catfile($arch_dir, "libc++_shared.so")) or warn "Failed to copy libc++_shared.so: $!";
++                        print "Copied libc++_shared.so to $arch_name\n" if $verbose;
++                    } else {
++                        warn "Warning: Could not find libc++_shared.so at $libcpp\n";
++                    }
++                }
++            } else {
++                warn "Warning: Could not determine NDK path. libc++_shared.so was NOT copied (App may crash).\n";
++            }
++		}
++
+ 		our $asset_install_dir = "$pixiewood_dirname/android/app/src/main/assets/";
+ 
+ 		our $root = "$pixiewood_dirname/root";
+@@ -783,20 +940,35 @@ my %actions = (
+ 		};
+ 
+ 		unless ($skip_gradle) {
+-			my $gradle = fork;
+-			die "fork failed: $!" unless defined $gradle;
+-
+-			if ($gradle == 0) {
+-				$ENV{ANDROID_HOME} = $cfg->{'android-sdk'};
+-				chdir "$pixiewood_dirname/android" or die("Failed to enter android directory: $!");
+-				exec ("./gradlew",  "--no-daemon",
+-				      $cfg->{'release'} ? "assembleRelease" : "assembleDebug"
+-				) or die "exec failed: $!";
+-			}
+-
+-			waitpid($gradle, 0);
+-			die "Gradle build failed" unless $? == 0;
+-		}
++            my $gradle_pid = fork;
++            die "fork failed: $!" unless defined $gradle_pid;
++
++            if ($gradle_pid == 0) {
++                $ENV{ANDROID_HOME} = $cfg->{'android-sdk'};
++                chdir "$pixiewood_dirname/android" or die("Failed to enter android directory: $!");
++                
++               # --- FIX START: Windows Detection ---
++                my $is_windows = ($^O eq 'MSWin32' || $^O eq 'msys' || $^O eq 'cygwin');
++                my $gradle_cmd = $is_windows ? "gradlew.bat" : "./gradlew";
++                
++                if ($is_windows) {
++                    # Explicitly find cmd.exe using the system environment variable
++                    my $cmd_exe = $ENV{COMSPEC} || "C:\\Windows\\System32\\cmd.exe";
++                    
++                    exec ($cmd_exe, "/c", $gradle_cmd, "--no-daemon",
++                          $cfg->{'release'} ? "assembleRelease" : "assembleDebug"
++                    ) or die "exec failed: $!";
++                } else {
++                    exec ($gradle_cmd, "--no-daemon",
++                          $cfg->{'release'} ? "assembleRelease" : "assembleDebug"
++                    ) or die "exec failed: $!";
++                }
++                # --- FIX END ---
++            }
++
++            waitpid($gradle_pid, 0);
++            die "Gradle build failed" unless $? == 0;
++        }
+ 	}
+ );
+ 

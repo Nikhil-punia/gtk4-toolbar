@@ -24,7 +24,7 @@ class PixiewoodPatcher {
             let patched = false;
 
             // Patch 0: Add getcwd to Cwd imports (required for Windows)
-            if (scriptContent.includes('use Cwd qw(abs_path);') && 
+            if (scriptContent.includes('use Cwd qw(abs_path);') &&
                 !scriptContent.includes('use Cwd qw(abs_path getcwd);')) {
                 scriptContent = scriptContent.replace(
                     'use Cwd qw(abs_path);',
@@ -34,7 +34,7 @@ class PixiewoodPatcher {
             }
 
             // Patch 1: Add dirname to File::Basename imports
-            if (scriptContent.includes('use File::Basename qw(fileparse);') && 
+            if (scriptContent.includes('use File::Basename qw(fileparse);') &&
                 !scriptContent.includes('use File::Basename qw(fileparse dirname);')) {
                 scriptContent = scriptContent.replace(
                     'use File::Basename qw(fileparse);',
@@ -44,7 +44,7 @@ class PixiewoodPatcher {
             }
 
             // Patch 2: Add rmtree to File::Path imports
-            if (scriptContent.includes('use File::Path qw(make_path);') && 
+            if (scriptContent.includes('use File::Path qw(make_path);') &&
                 !scriptContent.includes('use File::Path qw(make_path rmtree);')) {
                 scriptContent = scriptContent.replace(
                     'use File::Path qw(make_path);',
@@ -78,7 +78,7 @@ class PixiewoodPatcher {
 			}
 			return undef;
 		}`;
-            
+
             const newForceSymlink = `		sub force_symlink {
 			my ($target, $new) = @_;
 
@@ -133,7 +133,7 @@ class PixiewoodPatcher {
 			}
 			return undef;
 		}`;
-            
+
             if (scriptContent.includes(oldForceSymlink)) {
                 scriptContent = scriptContent.replace(oldForceSymlink, newForceSymlink);
                 patched = true;
@@ -144,7 +144,7 @@ class PixiewoodPatcher {
                 const oldHostTag = `$tcc->set_string("constants", "toolchain", "'$toolchain/toolchains/llvm/prebuilt/$host_tag/'");`;
                 const newHostTag = `$tcc->set_string("constants", "toolchain", "'$toolchain/toolchains/llvm/prebuilt/$host_tag/'");
 		$tcc->set_string("constants", "cmd_ext", "'$cmd_ext'");`;
-                
+
                 if (!scriptContent.includes("my $cmd_ext")) {
                     scriptContent = scriptContent.replace(
                         "my $host_tag = $^O eq 'MSWin32' || $^O eq 'msys' || $^O eq 'cygwin' ? 'windows-x86_64' : 'linux-x86_64';",
@@ -194,7 +194,7 @@ class PixiewoodPatcher {
             }
 
             // Patch 7: Add jniLibs copy step in build for Windows
-            if (scriptContent.includes("run \\@cmd or die('Failed to install files');") && 
+            if (scriptContent.includes("run \\@cmd or die('Failed to install files');") &&
                 !scriptContent.includes('Copying libraries to jniLibs')) {
                 scriptContent = scriptContent.replace(
                     /run \\@cmd or die\('Failed to install files'\);\s*\n\s*\}\s*\n\s*our \$asset_install_dir/,
@@ -238,7 +238,7 @@ class PixiewoodPatcher {
             }
 
             // Patch 7b: Copy libc++_shared.so from NDK to jniLibs (required for C++ runtime)
-            if (scriptContent.includes('Copying libraries to jniLibs') && 
+            if (scriptContent.includes('Copying libraries to jniLibs') &&
                 !scriptContent.includes('libc++_shared.so')) {
                 scriptContent = scriptContent.replace(
                     /\}, \$root_lib_abs\);\s*\n\s*\}\s*\n\s*our \$asset_install_dir/,
@@ -297,7 +297,7 @@ class PixiewoodPatcher {
 				}
 			}
 			`;
-                
+
                 scriptContent = scriptContent.replace(
                     /unless \(\$skip_gradle\) \{\s*\n\s*\$ENV\{ANDROID_HOME\}/,
                     `unless ($skip_gradle) {${javaHomeAutoDetect}\n\t\t\t$ENV{ANDROID_HOME}`
@@ -349,7 +349,7 @@ class PixiewoodPatcher {
 				waitpid($gradle, 0);
 				die "Gradle build failed" unless $? == 0;
 			}`;
-                
+
                 // Replace the simple gradlew exec with the Windows-aware version
                 scriptContent = scriptContent.replace(
                     /my \$gradle = fork;\s*\n\s*die "fork failed: \$!" unless defined \$gradle;\s*\n\s*if \(\$gradle == 0\) \{\s*\n\s*chdir \$android_dir or die\("Failed to enter android directory: \$!"\);\s*\n\s*exec \("\.\/gradlew"[^}]+\}\s*\n\s*waitpid\(\$gradle, 0\);\s*\n\s*die "Gradle build failed" unless \$\? == 0;/,
@@ -384,7 +384,7 @@ class PixiewoodPatcher {
     patchAndroidCross(pixiewoodScriptPath) {
         const pixiewoodDir = path.dirname(pixiewoodScriptPath);
         const androidCrossPath = path.join(pixiewoodDir, 'prepare', 'android.cross');
-        
+
         if (fs.existsSync(androidCrossPath)) {
             let crossContent = fs.readFileSync(androidCrossPath, 'utf8');
             if (!crossContent.includes('+ cmd_ext')) {
@@ -415,31 +415,47 @@ class PixiewoodPatcher {
         // Patch getopt.c
         if (fs.existsSync(gperfGetoptCPath)) {
             let getoptContent = fs.readFileSync(gperfGetoptCPath, 'utf8');
-            
-            if (getoptContent.includes('extern char *getenv ();') && 
+            let is_mod = false;
+
+
+            if (getoptContent.includes('extern char *getenv ();') &&
                 !getoptContent.includes('/* Patched for Android NDK compatibility */')) {
                 // Replace K&R style declaration with ANSI C style
                 getoptContent = getoptContent.replace(
                     'extern char *getenv ();',
                     '/* Patched for Android NDK compatibility */\n#include <stdlib.h> /* for getenv */'
                 );
-                
+
                 // Also fix getopt declaration if present
                 getoptContent = getoptContent.replace(
                     /extern int getopt \(\);/g,
                     '/* getopt declaration patched */\nextern int getopt (int argc, char *const *argv, const char *optstring);'
                 );
-                
+
+                is_mod = true;
+            }
+
+            if (getoptContent.includes('extern int strncmp ();')) {
+                getoptContent = getoptContent.replace(
+                    'extern int strncmp ();',
+                    '#include <string.h>'
+                );
+
+                is_mod = true;
+            }
+
+            if (is_mod) {
                 fs.writeFileSync(gperfGetoptCPath, getoptContent, 'utf8');
                 Logger.info('Patched gperf getopt.c for Android NDK');
             }
+
         }
 
         // Patch getopt.h
         if (fs.existsSync(gperfGetoptHPath)) {
             let getoptHContent = fs.readFileSync(gperfGetoptHPath, 'utf8');
-            
-            if (getoptHContent.includes('extern int getopt ();') && 
+
+            if (getoptHContent.includes('extern int getopt ();') &&
                 !getoptHContent.includes('/* Patched for Android NDK */')) {
                 getoptHContent = getoptHContent.replace(
                     'extern int getopt ();',
