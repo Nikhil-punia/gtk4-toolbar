@@ -1,3 +1,9 @@
+// a quick note : the extension is working for compilation 
+// of the libs and loading the app into the device via adb
+// for the android part but the reason for the tls error 
+// on the app side is sill to be solved for proper implementation as 
+// the running example for the extension.
+
 #include <gtk/gtk.h>
 #include <adwaita.h>
 #include <stdio.h>
